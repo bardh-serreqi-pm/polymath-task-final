@@ -1,0 +1,35 @@
+# Example Terraform variables file for CI/CD pipeline
+# Copy this file to terraform.tfvars and fill in your values
+
+project_name = "habit-tracker"
+environment  = "staging"
+
+# GitHub Configuration
+github_owner = "bardh-serreqi-pm"
+github_repo  = "polymath-task-final"
+github_branch = "main"
+# github_token = "your-github-personal-access-token"  # Set via environment variable or AWS Secrets Manager
+
+# AWS Configuration
+aws_region = "us-east-1"
+
+# ECR Repository URLs (from IAC module outputs)
+# Get these values from: terraform output -json in the IAC module
+ecr_api_repository_url = "123456789012.dkr.ecr.us-east-1.amazonaws.com/habit-tracker-api"
+ecr_web_repository_url = "123456789012.dkr.ecr.us-east-1.amazonaws.com/habit-tracker-web"
+
+# Terraform State Configuration
+terraform_state_bucket      = "your-terraform-state-bucket-name"
+terraform_state_lock_table  = "your-terraform-state-lock-table-name"
+
+# VPC Configuration (optional)
+# vpc_id     = "vpc-xxxxxxxxx"
+# subnet_ids = ["subnet-xxxxxxxxx", "subnet-yyyyyyyyy"]
+
+# Tags
+tags = {
+  Project   = "ApprenticeFinal"
+  ManagedBy = "Terraform"
+  Owner     = "your-name"
+}
+

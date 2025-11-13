@@ -1,0 +1,16 @@
+# Example Terraform variables file for IAC module
+# Copy this file to terraform.tfvars and fill in your values
+
+project_name = "habit-tracker"
+environment  = "staging"
+
+# AWS Configuration
+aws_region = "us-east-1"
+
+# Tags
+tags = {
+  Project   = "ApprenticeFinal"
+  ManagedBy = "Terraform"
+  Owner     = "your-name"
+}
+
