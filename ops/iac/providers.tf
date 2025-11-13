@@ -12,7 +12,7 @@ terraform {
     bucket         = "bardhi-apprentice-final-state"
     key            = "iac/state/terraform.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "terraform-state-lock-table-name"
+    dynamodb_table = "apprentice-final-terraform-state-lock"
     encrypt        = true
   }
 }

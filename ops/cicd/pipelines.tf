@@ -38,7 +38,7 @@ resource "aws_codebuild_project" "terraform" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = "ops/iac/modules/buildspec-terraform.yml"
+    buildspec = "ops/iac/buildspec-terraform.yml"
   }
 
   tags = {
