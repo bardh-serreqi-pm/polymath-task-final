@@ -16,10 +16,15 @@ phases:
           terraform version
       - |
           IMAGE_FILE="$CODEBUILD_SRC_DIR/lambda-image.json"
+          if [ ! -f "$IMAGE_FILE" ] && [ -n "${CODEBUILD_SRC_DIR_build_output:-}" ]; then
+            IMAGE_FILE="$CODEBUILD_SRC_DIR_build_output/lambda-image.json"
+          fi
           if [ -f "$IMAGE_FILE" ]; then
-            echo "Discovered lambda-image.json artifact, exporting TF_VAR_lambda_image_uri"
-            export TF_VAR_lambda_image_uri=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["imageUri"])' "$IMAGE_FILE")
+            echo "Discovered lambda-image.json artifact at $IMAGE_FILE, exporting TF_VAR_lambda_image_uri"
+            export TF_VAR_lambda_image_uri=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))[\"imageUri\"])' "$IMAGE_FILE")
             echo "TF_VAR_lambda_image_uri set to $TF_VAR_lambda_image_uri"
+          else
+            echo "Warning: lambda-image.json not found; Terraform will require lambda_image_uri from variables."
           fi
 
   build:
