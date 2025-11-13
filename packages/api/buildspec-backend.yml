@@ -4,35 +4,73 @@ phases:
   pre_build:
     commands:
       - |
-          echo Logging in to Amazon ECR...
-          aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
-          REPOSITORY_URI="$ECR_REPOSITORY"
-          COMMIT_HASH="$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c 1-7)"
-          IMAGE_TAG="${COMMIT_HASH}-${CODEBUILD_BUILD_NUMBER}"
-          echo "Image tag: $IMAGE_TAG"
+          PIPELINE_PHASE="${PIPELINE_PHASE:-build}"
+          echo "Pipeline phase: $PIPELINE_PHASE"
+          if [ "$PIPELINE_PHASE" = "build" ]; then
+            echo "Logging in to Amazon ECR..."
+            aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+            export REPOSITORY_URI="$ECR_REPOSITORY"
+            export COMMIT_HASH="$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c 1-7)"
+            export IMAGE_TAG="${COMMIT_HASH}-${CODEBUILD_BUILD_NUMBER}"
+            echo "Image tag: $IMAGE_TAG"
+          else
+            echo "Health check phase - skipping ECR login."
+          fi
 
   build:
     commands:
       - |
-          echo "Build started on $(date)"
-          echo "Building API Docker image..."
-          cd "$CODEBUILD_SRC_DIR/packages/api"
-          docker build -t "$REPOSITORY_URI:$IMAGE_TAG" .
-          docker tag "$REPOSITORY_URI:$IMAGE_TAG" "$REPOSITORY_URI:latest"
+          PIPELINE_PHASE="${PIPELINE_PHASE:-build}"
+          if [ "$PIPELINE_PHASE" = "build" ]; then
+            echo "Build started on $(date)"
+            echo "Building API Docker image..."
+            cd "$CODEBUILD_SRC_DIR/packages/api"
+            docker build -t "$REPOSITORY_URI:$IMAGE_TAG" .
+            docker tag "$REPOSITORY_URI:$IMAGE_TAG" "$REPOSITORY_URI:latest"
+          else
+            echo "Running API health check against ${API_URL}/health ..."
+            if [ -z "${API_URL:-}" ]; then
+              echo "API_URL environment variable is not set."
+              exit 1
+            fi
+            STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" "${API_URL}/health" || echo "000")"
+            if [ "$STATUS_CODE" = "200" ]; then
+              echo "Health check passed with status 200."
+            else
+              echo "Health check failed with status ${STATUS_CODE}."
+              exit 1
+            fi
+          fi
 
   post_build:
     commands:
       - |
-          echo "Build completed on $(date)"
-          echo "Pushing Docker image..."
-          docker push "$REPOSITORY_URI:$IMAGE_TAG"
-          docker push "$REPOSITORY_URI:latest"
-          echo "Writing image definitions file..."
+          PIPELINE_PHASE="${PIPELINE_PHASE:-build}"
           cd "$CODEBUILD_SRC_DIR"
-          printf '[{"name":"api","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
-          cat imagedefinitions.json
+          if [ "$PIPELINE_PHASE" = "build" ]; then
+            echo "Build completed on $(date)"
+            echo "Pushing Docker image..."
+            docker push "$REPOSITORY_URI:$IMAGE_TAG"
+            docker push "$REPOSITORY_URI:latest"
+            echo "Writing lambda image descriptor..."
+            cat <<EOF > lambda-image.json
+            {
+              "imageUri": "${REPOSITORY_URI}:${IMAGE_TAG}"
+            }
+            EOF
+            cat lambda-image.json
+          else
+            echo "Health check completed on $(date)"
+            cat <<EOF > lambda-image.json
+            {
+              "status": "ok",
+              "checkedAt": "$(date +%Y-%m-%dT%H:%M:%SZ)"
+            }
+            EOF
+            cat lambda-image.json
+          fi
 
 artifacts:
   files:
-    - imagedefinitions.json
+    - lambda-image.json
 

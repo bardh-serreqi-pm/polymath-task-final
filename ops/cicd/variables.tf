@@ -33,13 +33,28 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "ecr_api_repository_url" {
-  description = "Full URL of the ECR repository for API container (from IAC outputs)"
+variable "api_ecr_repository_url" {
+  description = "Full URL of the ECR repository for the Lambda container image (from IAC outputs)"
   type        = string
 }
 
-variable "ecr_web_repository_url" {
-  description = "Full URL of the ECR repository for Web container (from IAC outputs)"
+variable "frontend_bucket_name" {
+  description = "S3 bucket where the frontend build will be uploaded"
+  type        = string
+}
+
+variable "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID for cache invalidation"
+  type        = string
+}
+
+variable "api_gateway_url" {
+  description = "Invoke URL for API Gateway used in health checks"
+  type        = string
+}
+
+variable "alerts_sns_topic_arn" {
+  description = "SNS topic ARN for pipeline notifications"
   type        = string
 }
 
@@ -51,36 +66,6 @@ variable "terraform_state_bucket" {
 variable "terraform_state_lock_table" {
   description = "DynamoDB table name for Terraform state locking"
   type        = string
-}
-
-variable "vpc_id" {
-  description = "VPC ID for CodeBuild projects (if needed)"
-  type        = string
-  default     = ""
-}
-
-variable "subnet_ids" {
-  description = "Subnet IDs for CodeBuild projects (if needed)"
-  type        = list(string)
-  default     = []
-}
-
-variable "ecs_cluster_name" {
-  description = "ECS cluster name for backend deployment (optional)"
-  type        = string
-  default     = ""
-}
-
-variable "frontend_s3_bucket" {
-  description = "S3 bucket name for frontend deployment (optional, will be created if not provided)"
-  type        = string
-  default     = ""
-}
-
-variable "cloudfront_invalidation_lambda" {
-  description = "Lambda function name for CloudFront cache invalidation (optional)"
-  type        = string
-  default     = ""
 }
 
 variable "tags" {

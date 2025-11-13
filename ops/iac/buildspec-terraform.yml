@@ -14,6 +14,13 @@ phases:
             mv terraform /usr/local/bin/
           fi
           terraform version
+      - |
+          IMAGE_FILE="$CODEBUILD_SRC_DIR/lambda-image.json"
+          if [ -f "$IMAGE_FILE" ]; then
+            echo "Discovered lambda-image.json artifact, exporting TF_VAR_lambda_image_uri"
+            export TF_VAR_lambda_image_uri=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["imageUri"])' "$IMAGE_FILE")
+            echo "TF_VAR_lambda_image_uri set to $TF_VAR_lambda_image_uri"
+          fi
 
   build:
     commands:

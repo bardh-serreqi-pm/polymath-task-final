@@ -7,6 +7,29 @@ environment  = "staging"
 # AWS Configuration
 aws_region = "us-east-1"
 
+# Network configuration
+vpc_cidr            = "10.20.0.0/16"
+public_subnet_cidrs = ["10.20.0.0/24", "10.20.1.0/24"]
+private_subnet_cidrs = ["10.20.16.0/24", "10.20.17.0/24"]
+
+# Data layer configuration
+# db_name            = "habittracker"
+# db_master_username = "dbadmin"
+# aurora_min_capacity = 0.5
+# aurora_max_capacity = 4
+
+# Compute configuration
+# Set by CI/CD with the built Lambda image URI
+lambda_image_uri = "123456789012.dkr.ecr.us-east-1.amazonaws.com/habit-tracker-staging:latest"
+
+lambda_environment = {
+  DJANGO_SETTINGS_MODULE = "Habit_Tracker.settings"
+  DEBUG                  = "false"
+}
+
+# Edge configuration
+# frontend_bucket_name = "habit-tracker-staging-frontend"
+
 # Tags
 tags = {
   Project   = "ApprenticeFinal"

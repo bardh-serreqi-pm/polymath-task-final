@@ -4,44 +4,35 @@ phases:
   pre_build:
     commands:
       - |
-          echo Logging in to Amazon ECR...
-          aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
-          REPOSITORY_URI="$ECR_REPOSITORY"
-          COMMIT_HASH="$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c 1-7)"
-          IMAGE_TAG="${COMMIT_HASH}-${CODEBUILD_BUILD_NUMBER}"
-          echo "Image tag: $IMAGE_TAG"
+          echo "Installing Node.js dependencies..."
+          cd "$CODEBUILD_SRC_DIR/packages/web"
+          npm ci
 
   build:
     commands:
       - |
           echo "Build started on $(date)"
-          echo "Building Web Docker image..."
+          echo "Building React application..."
           cd "$CODEBUILD_SRC_DIR/packages/web"
-          docker build -t "$REPOSITORY_URI:$IMAGE_TAG" .
-          docker tag "$REPOSITORY_URI:$IMAGE_TAG" "$REPOSITORY_URI:latest"
-          echo "Extracting static files from container..."
-          CONTAINER_ID="$(docker create "$REPOSITORY_URI:$IMAGE_TAG")"
-          docker cp "$CONTAINER_ID:/usr/share/nginx/html" ./dist
-          docker rm "$CONTAINER_ID"
-          echo "Static files extracted to ./dist"
+          npm run build
+          echo "Build completed successfully"
 
   post_build:
     commands:
       - |
-          echo "Build completed on $(date)"
-          echo "Pushing Docker image..."
-          docker push "$REPOSITORY_URI:$IMAGE_TAG"
-          docker push "$REPOSITORY_URI:latest"
-          echo "Preparing deployment package..."
-          cd "$CODEBUILD_SRC_DIR"
-          if [ -d "packages/web/dist" ]; then
-            (cd packages/web/dist && zip -r ../../../frontend-deploy.zip .)
-          else
-            echo "Error: dist directory not found" && exit 1
-          fi
-          echo "Deployment package created: frontend-deploy.zip"
+          echo "Syncing static files to S3..."
+          cd "$CODEBUILD_SRC_DIR/packages/web"
+          aws s3 sync dist/ s3://${S3_BUCKET}/ --delete
+          echo "Files synced to S3 bucket: ${S3_BUCKET}"
+          
+          echo "Invalidating CloudFront cache..."
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+          echo "CloudFront invalidation created: $INVALIDATION_ID"
 
 artifacts:
   files:
-    - frontend-deploy.zip
-
+    - '**/*'

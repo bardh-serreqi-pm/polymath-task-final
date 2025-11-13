@@ -269,8 +269,8 @@ resource "aws_iam_role_policy" "codepipeline_frontend_policy" {
         Resource = [
           aws_s3_bucket.pipeline_artifacts.arn,
           "${aws_s3_bucket.pipeline_artifacts.arn}/*",
-          "arn:aws:s3:::${var.frontend_s3_bucket}",
-          "arn:aws:s3:::${var.frontend_s3_bucket}/*"
+          "arn:aws:s3:::${var.frontend_bucket_name}",
+          "arn:aws:s3:::${var.frontend_bucket_name}/*"
         ]
       },
       {
@@ -291,9 +291,9 @@ resource "aws_iam_role_policy" "codepipeline_frontend_policy" {
       {
         Effect = "Allow"
         Action = [
-          "lambda:InvokeFunction"
+          "cloudfront:CreateInvalidation"
         ]
-        Resource = var.cloudfront_invalidation_lambda != "" ? "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.cloudfront_invalidation_lambda}" : "*"
+        Resource = "*"
       },
     ]
   })
@@ -343,21 +343,24 @@ resource "aws_iam_role_policy" "codebuild_frontend_policy" {
         ]
         Resource = [
           "${aws_s3_bucket.pipeline_artifacts.arn}/*",
-          "arn:aws:s3:::${var.frontend_s3_bucket}",
-          "arn:aws:s3:::${var.frontend_s3_bucket}/*"
+          "arn:aws:s3:::${var.frontend_bucket_name}",
+          "arn:aws:s3:::${var.frontend_bucket_name}/*"
         ]
       },
       {
         Effect = "Allow"
         Action = [
-          "ecr:GetAuthorizationToken",
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage",
-          "ecr:PutImage",
-          "ecr:InitiateLayerUpload",
-          "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload"
+          "s3:GetBucketLocation",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.frontend_bucket_name}"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateInvalidation"
         ]
         Resource = "*"
       }

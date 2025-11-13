@@ -179,11 +179,15 @@ resource "aws_codebuild_project" "backend" {
     }
     environment_variable {
       name  = "ECR_REPOSITORY"
-      value = var.ecr_api_repository_url
+      value = var.api_ecr_repository_url
     }
     environment_variable {
       name  = "ENVIRONMENT"
       value = var.environment
+    }
+    environment_variable {
+      name  = "API_URL"
+      value = var.api_gateway_url
     }
   }
 
@@ -244,26 +248,61 @@ resource "aws_codepipeline" "backend" {
 
       configuration = {
         ProjectName = aws_codebuild_project.backend.name
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "PIPELINE_PHASE"
+            value = "build"
+          }
+        ])
       }
     }
   }
 
-  # Deploy to Staging Stage
+  # Deploy to Staging Stage (Update Lambda via Terraform)
   stage {
     name = "Deploy-Staging"
 
     action {
-      name            = "Deploy-Staging"
-      category        = "Deploy"
+      name            = "Terraform-Apply-Staging"
+      category        = "Build"
       owner           = "AWS"
-      provider        = "ECS"
-      input_artifacts = ["build_output"]
+      provider        = "CodeBuild"
+      input_artifacts = ["source_output", "build_output"]
       version         = "1"
 
       configuration = {
-        ClusterName = var.ecs_cluster_name != "" ? var.ecs_cluster_name : "${var.project_name}-cluster-staging"
-        ServiceName = "${var.project_name}-api-service-staging"
-        FileName    = "imagedefinitions.json"
+        ProjectName   = aws_codebuild_project.terraform.name
+        PrimarySource = "source_output"
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "TF_ACTION"
+            value = "apply"
+          }
+        ])
+      }
+    }
+  }
+
+  # Test Stage
+  stage {
+    name = "Test"
+
+    action {
+      name            = "Health-Check"
+      category        = "Test"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      input_artifacts = ["source_output"]
+      version         = "1"
+
+      configuration = {
+        ProjectName = aws_codebuild_project.backend.name
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "PIPELINE_PHASE"
+            value = "health"
+          }
+        ])
       }
     }
   }
@@ -285,22 +324,31 @@ resource "aws_codepipeline" "backend" {
     }
   }
 
-  # Deploy to Production Stage
+  # Deploy to Production Stage (Update Lambda via Terraform)
   stage {
     name = "Deploy-Production"
 
     action {
-      name            = "Deploy-Production"
-      category        = "Deploy"
+      name            = "Terraform-Apply-Production"
+      category        = "Build"
       owner           = "AWS"
-      provider        = "ECS"
-      input_artifacts = ["build_output"]
+      provider        = "CodeBuild"
+      input_artifacts = ["source_output", "build_output"]
       version         = "1"
 
       configuration = {
-        ClusterName = var.ecs_cluster_name != "" ? var.ecs_cluster_name : "${var.project_name}-cluster-production"
-        ServiceName = "${var.project_name}-api-service-production"
-        FileName    = "imagedefinitions.json"
+        ProjectName   = aws_codebuild_project.terraform.name
+        PrimarySource = "source_output"
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "TF_ACTION"
+            value = "apply"
+          },
+          {
+            name  = "TF_VAR_environment"
+            value = "production"
+          }
+        ])
       }
     }
   }
@@ -341,16 +389,16 @@ resource "aws_codebuild_project" "frontend" {
       value = data.aws_caller_identity.current.account_id
     }
     environment_variable {
-      name  = "ECR_REPOSITORY"
-      value = var.ecr_web_repository_url
-    }
-    environment_variable {
       name  = "ENVIRONMENT"
       value = var.environment
     }
     environment_variable {
       name  = "S3_BUCKET"
-      value = var.frontend_s3_bucket != "" ? var.frontend_s3_bucket : "${var.project_name}-frontend-${var.environment}"
+      value = var.frontend_bucket_name
+    }
+    environment_variable {
+      name  = "CLOUDFRONT_DISTRIBUTION_ID"
+      value = var.cloudfront_distribution_id
     }
   }
 
@@ -427,7 +475,7 @@ resource "aws_codepipeline" "frontend" {
       version         = "1"
 
       configuration = {
-        BucketName = var.frontend_s3_bucket != "" ? var.frontend_s3_bucket : "${var.project_name}-frontend-${var.environment}"
+        BucketName = var.frontend_bucket_name
         Extract    = "true"
       }
     }
@@ -463,7 +511,7 @@ resource "aws_codepipeline" "frontend" {
       version         = "1"
 
       configuration = {
-        BucketName = var.frontend_s3_bucket != "" ? var.frontend_s3_bucket : "${var.project_name}-frontend-production"
+        BucketName = var.frontend_bucket_name
         Extract    = "true"
       }
     }
