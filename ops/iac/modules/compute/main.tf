@@ -13,6 +13,8 @@ locals {
 
 data "aws_region" "current" {}
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_ecr_repository" "api" {
   name                 = "${var.project_name}-${var.environment}-api"
   image_tag_mutability = "MUTABLE"

@@ -15,11 +15,11 @@ RUN yum install -y \
     && yum clean all
 
 # Copy requirements and install Python dependencies
-COPY api/requirements.txt ${LAMBDA_TASK_ROOT}/
+COPY requirements.txt ${LAMBDA_TASK_ROOT}/
 RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
 
 # Copy API project
-COPY api/ ${LAMBDA_TASK_ROOT}/
+COPY . ${LAMBDA_TASK_ROOT}/
 
 # Create directory for static files
 RUN mkdir -p ${LAMBDA_TASK_ROOT}/staticfiles
