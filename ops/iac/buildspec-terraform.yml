@@ -3,61 +3,62 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo Terraform deployment started on `date`
-      - echo Environment: $TF_VAR_environment
-      - echo Installing Terraform...
       - |
-        if ! command -v terraform &> /dev/null; then
-          wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
-          unzip terraform_1.6.0_linux_amd64.zip
-          chmod +x terraform
-          mv terraform /usr/local/bin/
-        fi
-      - terraform version
+          echo "Terraform deployment started on $(date)"
+          echo "Environment: $TF_VAR_environment"
+          echo "Ensuring Terraform is installed..."
+          if ! command -v terraform >/dev/null 2>&1; then
+            wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
+            unzip terraform_1.6.0_linux_amd64.zip
+            chmod +x terraform
+            mv terraform /usr/local/bin/
+          fi
+          terraform version
 
   build:
     commands:
-      - echo Initializing Terraform...
-      - cd $CODEBUILD_SRC_DIR/ops/iac
       - |
-        cat > backend.tf <<EOF
-        terraform {
-          backend "s3" {
-            bucket         = "$TF_STATE_BUCKET"
-            key            = "${TF_VAR_environment}/terraform.tfstate"
-            region         = "$AWS_DEFAULT_REGION"
-            dynamodb_table = "$TF_STATE_LOCK_TABLE"
-            encrypt        = true
+          echo "Initializing Terraform..."
+          cd "$CODEBUILD_SRC_DIR/ops/iac"
+          cat > backend.tf <<EOF
+          terraform {
+            backend "s3" {
+              bucket         = "$TF_STATE_BUCKET"
+              key            = "${TF_VAR_environment}/terraform.tfstate"
+              region         = "$AWS_DEFAULT_REGION"
+              dynamodb_table = "$TF_STATE_LOCK_TABLE"
+              encrypt        = true
+            }
           }
-        }
-        EOF
-      - terraform init
-      - |
-        if [ "$TF_ACTION" = "plan" ]; then
-          echo Running Terraform plan...
-          if [ -f "${TF_VAR_environment}.tfvars" ]; then
-            terraform plan -out=tfplan -var-file=${TF_VAR_environment}.tfvars
+          EOF
+          terraform init
+
+          if [ "$TF_ACTION" = "plan" ]; then
+            echo "Running Terraform plan..."
+            if [ -f "${TF_VAR_environment}.tfvars" ]; then
+              terraform plan -out=tfplan -var-file="${TF_VAR_environment}.tfvars"
+            else
+              terraform plan -out=tfplan
+            fi
+          elif [ "$TF_ACTION" = "apply" ]; then
+            echo "Applying Terraform configuration..."
+            if [ -f "tfplan" ]; then
+              terraform apply -auto-approve tfplan
+            else
+              echo "Error: tfplan file not found. Run plan first."
+              exit 1
+            fi
           else
-            terraform plan -out=tfplan
-          fi
-        elif [ "$TF_ACTION" = "apply" ]; then
-          echo Applying Terraform configuration...
-          if [ -f "tfplan" ]; then
-            terraform apply -auto-approve tfplan
-          else
-            echo "Error: tfplan file not found. Run plan first."
+            echo "Error: TF_ACTION must be 'plan' or 'apply'"
             exit 1
           fi
-        else
-          echo "Error: TF_ACTION must be 'plan' or 'apply'"
-          exit 1
-        fi
 
   post_build:
     commands:
-      - echo Terraform deployment completed on `date`
-      - echo Outputting Terraform outputs...
-      - terraform output -json > terraform-outputs.json
+      - |
+          echo "Terraform deployment completed on $(date)"
+          echo "Outputting Terraform outputs..."
+          terraform output -json > terraform-outputs.json
 
 artifacts:
   files:
