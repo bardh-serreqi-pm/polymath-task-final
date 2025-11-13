@@ -21,10 +21,14 @@ phases:
           fi
           if [ -f "$IMAGE_FILE" ]; then
             echo "Discovered lambda-image.json artifact at $IMAGE_FILE, exporting TF_VAR_lambda_image_uri"
-            export TF_VAR_lambda_image_uri=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))[\"imageUri\"])' "$IMAGE_FILE")
+            export TF_VAR_lambda_image_uri=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["imageUri"])' "$IMAGE_FILE")
             echo "TF_VAR_lambda_image_uri set to $TF_VAR_lambda_image_uri"
           else
             echo "Warning: lambda-image.json not found; Terraform will require lambda_image_uri from variables."
+            if [ -z "${TF_VAR_lambda_image_uri:-}" ] && [ -n "${DEFAULT_LAMBDA_IMAGE_URI:-}" ]; then
+              export TF_VAR_lambda_image_uri="$DEFAULT_LAMBDA_IMAGE_URI"
+              echo "TF_VAR_lambda_image_uri set from DEFAULT_LAMBDA_IMAGE_URI environment variable."
+            fi
           fi
 
   build:

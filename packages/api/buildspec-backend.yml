@@ -53,20 +53,18 @@ phases:
             docker push "$REPOSITORY_URI:$IMAGE_TAG"
             docker push "$REPOSITORY_URI:latest"
             echo "Writing lambda image descriptor..."
-            cat <<EOF > lambda-image.json
-            {
-              "imageUri": "${REPOSITORY_URI}:${IMAGE_TAG}"
-            }
-            EOF
+            printf '{
+  "imageUri": "%s"
+}
+' "${REPOSITORY_URI}:${IMAGE_TAG}" > lambda-image.json
             cat lambda-image.json
           else
             echo "Health check completed on $(date)"
-            cat <<EOF > lambda-image.json
-            {
-              "status": "ok",
-              "checkedAt": "$(date +%Y-%m-%dT%H:%M:%SZ)"
-            }
-            EOF
+            printf '{
+  "status": "ok",
+  "checkedAt": "%s"
+}
+' "$(date +%Y-%m-%dT%H:%M:%SZ)" > lambda-image.json
             cat lambda-image.json
           fi
 
