@@ -1,36 +1,28 @@
-# Use Python 3.11 slim image for smaller size
-FROM public.ecr.aws/docker/library/python:3.11-slim
+# Use AWS Lambda Python 3.11 base image
+FROM public.ecr.aws/lambda/python:3.11
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set work directory
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        postgresql-client \
+# Install system dependencies for PostgreSQL and other requirements
+RUN yum install -y \
+        postgresql \
         gcc \
-        python3-dev \
-        libpq-dev \
+        python3-devel \
+        postgresql-devel \
         curl \
-    && rm -rf /var/lib/apt/lists/*
+    && yum clean all
 
-# Install Python dependencies
-COPY api/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy requirements and install Python dependencies
+COPY api/requirements.txt ${LAMBDA_TASK_ROOT}/
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
 
 # Copy API project
-COPY api/ /app/
+COPY api/ ${LAMBDA_TASK_ROOT}/
 
 # Create directory for static files
-RUN mkdir -p /app/staticfiles
+RUN mkdir -p ${LAMBDA_TASK_ROOT}/staticfiles
 
-# Expose port
-EXPOSE 8000
-
-# Run migrations and start server
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"]
-
+# Set the CMD to your handler
+CMD [ "lambda_handler.lambda_handler" ]

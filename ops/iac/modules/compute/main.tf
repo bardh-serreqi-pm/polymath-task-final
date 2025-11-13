@@ -11,6 +11,8 @@ locals {
   )
 }
 
+data "aws_region" "current" {}
+
 resource "aws_ecr_repository" "api" {
   name                 = "${var.project_name}-${var.environment}-api"
   image_tag_mutability = "MUTABLE"
@@ -99,12 +101,18 @@ resource "aws_iam_policy" "lambda_data_access" {
         Resource = var.aurora_secret_arn
       },
       {
-        Effect   = "Allow"
-        Action   = ["ssm:GetParameter", "ssm:GetParameters"]
+        Effect = "Allow"
+        Action = ["ssm:GetParameter", "ssm:GetParameters"]
         Resource = [
-          var.aurora_writer_endpoint_param,
-          var.redis_endpoint_param
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter${var.aurora_writer_endpoint_param}",
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter${var.redis_endpoint_param}",
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/*"
         ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:DescribeParameters"]
+        Resource = "*"
       }
     ]
   })
@@ -138,10 +146,16 @@ resource "aws_lambda_function" "api" {
   environment {
     variables = merge(
       {
-        ENVIRONMENT                    = var.environment
-        AURORA_SECRET_ARN              = var.aurora_secret_arn
-        AURORA_WRITER_ENDPOINT_PARAM   = var.aurora_writer_endpoint_param
-        REDIS_ENDPOINT_PARAM           = var.redis_endpoint_param
+        ENVIRONMENT                  = var.environment
+        PROJECT_NAME                 = var.project_name
+        AWS_REGION                   = data.aws_region.current.name
+        AWS_SECRET_NAME              = var.aurora_secret_arn
+        AWS_SSM_PREFIX               = "/${var.project_name}/${var.environment}"
+        AURORA_SECRET_ARN            = var.aurora_secret_arn
+        AURORA_WRITER_ENDPOINT_PARAM = var.aurora_writer_endpoint_param
+        REDIS_ENDPOINT_PARAM         = var.redis_endpoint_param
+        DJANGO_SETTINGS_MODULE       = "Habit_Tracker.settings"
+        DB_MIGRATE_ON_START          = "false"
       },
       var.lambda_environment
     )

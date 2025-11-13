@@ -80,9 +80,9 @@ WSGI_APPLICATION = 'Habit_Tracker.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-# Use environment variables for Docker, fall back to local_settings for local development
+# Use environment variables for Docker/Lambda, fall back to local_settings for local development
 if os.environ.get('DB_HOST'):
-    # Docker/Production database configuration (PostgreSQL)
+    # Docker/Production/Lambda database configuration (PostgreSQL)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -91,8 +91,14 @@ if os.environ.get('DB_HOST'):
             'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
             'HOST': os.environ.get('DB_HOST', 'db'),
             'PORT': os.environ.get('DB_PORT', '5432'),
+            'OPTIONS': {
+                'connect_timeout': 10,
+            },
         }
     }
+    # Use reader endpoint for read replicas if available (optional)
+    if os.environ.get('DB_READER_HOST'):
+        DATABASES['default']['HOST'] = os.environ.get('DB_READER_HOST')
 elif os.path.exists('local_settings.py'):
     from local_settings import DATABASES
 else:
