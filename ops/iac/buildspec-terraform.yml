@@ -37,10 +37,27 @@ phases:
           echo "Initializing Terraform..."
           cd "$CODEBUILD_SRC_DIR/ops/iac"
           rm -f backend.tf
+          
+          # Ensure lambda_image_uri is set before terraform init
+          if [ -z "${TF_VAR_lambda_image_uri:-}" ]; then
+            echo "TF_VAR_lambda_image_uri not set, checking for DEFAULT_LAMBDA_IMAGE_URI..."
+            if [ -n "${DEFAULT_LAMBDA_IMAGE_URI:-}" ]; then
+              export TF_VAR_lambda_image_uri="$DEFAULT_LAMBDA_IMAGE_URI"
+              echo "TF_VAR_lambda_image_uri set from DEFAULT_LAMBDA_IMAGE_URI: $TF_VAR_lambda_image_uri"
+            else
+              echo "Error: Neither TF_VAR_lambda_image_uri nor DEFAULT_LAMBDA_IMAGE_URI is set."
+              echo "DEFAULT_LAMBDA_IMAGE_URI=${DEFAULT_LAMBDA_IMAGE_URI:-not set}"
+              exit 1
+            fi
+          else
+            echo "TF_VAR_lambda_image_uri already set: $TF_VAR_lambda_image_uri"
+          fi
+          
           terraform init
 
           if [ "$TF_ACTION" = "plan" ]; then
             echo "Running Terraform plan..."
+            echo "TF_VAR_lambda_image_uri=${TF_VAR_lambda_image_uri:-not set}"
             if [ -f "${TF_VAR_environment}.tfvars" ]; then
               terraform plan -out=tfplan -var-file="${TF_VAR_environment}.tfvars"
             else
