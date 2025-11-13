@@ -18,6 +18,7 @@ frontend_bucket_name       = "habit-tracker-staging-frontend"
 cloudfront_distribution_id = "EXAMPLE123456"
 api_gateway_url            = "https://abc123.execute-api.us-east-1.amazonaws.com/staging"
 alerts_sns_topic_arn       = "arn:aws:sns:us-east-1:123456789012:habit-tracker-staging-alerts"
+lambda_image_default_uri   = "123456789012.dkr.ecr.us-east-1.amazonaws.com/habit-tracker-staging-api:latest"
 
 # Terraform State Configuration
 terraform_state_bucket     = "your-terraform-state-bucket-name"

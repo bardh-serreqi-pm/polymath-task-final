@@ -53,6 +53,12 @@ variable "api_gateway_url" {
   type        = string
 }
 
+variable "lambda_image_default_uri" {
+  description = "Fallback Lambda image URI used by the Terraform pipeline when no build artifact is supplied."
+  type        = string
+  default     = ""
+}
+
 variable "alerts_sns_topic_arn" {
   description = "SNS topic ARN for pipeline notifications"
   type        = string

@@ -34,6 +34,10 @@ resource "aws_codebuild_project" "terraform" {
       name  = "TF_STATE_LOCK_TABLE"
       value = var.terraform_state_lock_table
     }
+    environment_variable {
+      name  = "DEFAULT_LAMBDA_IMAGE_URI"
+      value = var.lambda_image_default_uri
+    }
   }
 
   source {
