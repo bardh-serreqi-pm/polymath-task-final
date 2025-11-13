@@ -54,6 +54,13 @@ resource "aws_iam_role_policy" "codepipeline_terraform_policy" {
       {
         Effect = "Allow"
         Action = [
+          "codestar-connections:UseConnection"
+        ]
+        Resource = aws_codestarconnections_connection.github.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "sts:AssumeRole"
         ]
         Resource = aws_iam_role.codebuild_terraform_role.arn
@@ -112,6 +119,13 @@ resource "aws_iam_role_policy" "codepipeline_backend_policy" {
           "codebuild:StartBuild"
         ]
         Resource = aws_codebuild_project.backend.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "codestar-connections:UseConnection"
+        ]
+        Resource = aws_codestarconnections_connection.github.arn
       },
       {
         Effect = "Allow"
@@ -266,6 +280,13 @@ resource "aws_iam_role_policy" "codepipeline_frontend_policy" {
           "codebuild:StartBuild"
         ]
         Resource = aws_codebuild_project.frontend.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "codestar-connections:UseConnection"
+        ]
+        Resource = aws_codestarconnections_connection.github.arn
       },
       {
         Effect = "Allow"
