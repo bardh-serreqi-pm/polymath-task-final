@@ -152,6 +152,7 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 *.tfplan
+tfplan
 
 # Sensitive files
 secrets.tfvars
