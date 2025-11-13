@@ -27,17 +27,7 @@ phases:
       - |
           echo "Initializing Terraform..."
           cd "$CODEBUILD_SRC_DIR/ops/iac"
-          cat > backend.tf <<EOF
-          terraform {
-            backend "s3" {
-              bucket         = "$TF_STATE_BUCKET"
-              key            = "${TF_VAR_environment}/terraform.tfstate"
-              region         = "$AWS_DEFAULT_REGION"
-              dynamodb_table = "$TF_STATE_LOCK_TABLE"
-              encrypt        = true
-            }
-          }
-          EOF
+          rm -f backend.tf
           terraform init
 
           if [ "$TF_ACTION" = "plan" ]; then
