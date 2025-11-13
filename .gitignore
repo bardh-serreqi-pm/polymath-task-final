@@ -132,11 +132,9 @@ django3.log.txt
 #local settings
 local_settings.py
 
-#Docker
-Dockerfile
-docker-compose.yml
+# Docker (ignore root compose overrides but keep service Dockerfiles)
+/docker-compose.yml
 secrets
-
 habit/tests/py.py
 
 # Terraform files
