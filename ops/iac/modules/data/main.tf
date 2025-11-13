@@ -179,7 +179,7 @@ resource "aws_ssm_parameter" "redis_endpoint" {
   name        = "/${var.project_name}/${var.environment}/redis/endpoint"
   description = "Redis endpoint for ${var.environment}"
   type        = "String"
-  value       = aws_elasticache_serverless_cache.redis.endpoint
+  value       = "${aws_elasticache_serverless_cache.redis.endpoint[0].address}:${aws_elasticache_serverless_cache.redis.endpoint[0].port}"
   overwrite   = true
 
   tags = local.common_tags

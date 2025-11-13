@@ -5,7 +5,7 @@ phases:
     commands:
       - |
           echo "Terraform deployment started on $(date)"
-          echo "Environment: $TF_VAR_environment"
+          echo "Environment: ${TF_VAR_environment:-staging}"
           echo "Ensuring Terraform is installed..."
           if ! command -v terraform >/dev/null 2>&1; then
             wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
@@ -15,20 +15,21 @@ phases:
           fi
           terraform version
       - |
+          echo "Checking for lambda image URI..."
           IMAGE_FILE="$CODEBUILD_SRC_DIR/lambda-image.json"
           if [ ! -f "$IMAGE_FILE" ] && [ -n "${CODEBUILD_SRC_DIR_build_output:-}" ]; then
             IMAGE_FILE="$CODEBUILD_SRC_DIR_build_output/lambda-image.json"
           fi
           if [ -f "$IMAGE_FILE" ]; then
-            echo "Discovered lambda-image.json artifact at $IMAGE_FILE, exporting TF_VAR_lambda_image_uri"
+            echo "Discovered lambda-image.json artifact at $IMAGE_FILE"
             export TF_VAR_lambda_image_uri=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["imageUri"])' "$IMAGE_FILE")
             echo "TF_VAR_lambda_image_uri set to $TF_VAR_lambda_image_uri"
+          elif [ -n "${DEFAULT_LAMBDA_IMAGE_URI:-}" ]; then
+            export TF_VAR_lambda_image_uri="$DEFAULT_LAMBDA_IMAGE_URI"
+            echo "TF_VAR_lambda_image_uri set from DEFAULT_LAMBDA_IMAGE_URI: $TF_VAR_lambda_image_uri"
           else
-            echo "Warning: lambda-image.json not found; Terraform will require lambda_image_uri from variables."
-            if [ -z "${TF_VAR_lambda_image_uri:-}" ] && [ -n "${DEFAULT_LAMBDA_IMAGE_URI:-}" ]; then
-              export TF_VAR_lambda_image_uri="$DEFAULT_LAMBDA_IMAGE_URI"
-              echo "TF_VAR_lambda_image_uri set from DEFAULT_LAMBDA_IMAGE_URI environment variable."
-            fi
+            echo "Error: Neither lambda-image.json nor DEFAULT_LAMBDA_IMAGE_URI is available."
+            exit 1
           fi
 
   build:
@@ -36,35 +37,12 @@ phases:
       - |
           echo "Initializing Terraform..."
           cd "$CODEBUILD_SRC_DIR/ops/iac"
-          rm -f backend.tf
-          
-          # Ensure lambda_image_uri is set before terraform init
-          if [ -z "${TF_VAR_lambda_image_uri:-}" ]; then
-            echo "TF_VAR_lambda_image_uri not set, checking for DEFAULT_LAMBDA_IMAGE_URI..."
-            if [ -n "${DEFAULT_LAMBDA_IMAGE_URI:-}" ]; then
-              export TF_VAR_lambda_image_uri="$DEFAULT_LAMBDA_IMAGE_URI"
-              echo "TF_VAR_lambda_image_uri set from DEFAULT_LAMBDA_IMAGE_URI: $TF_VAR_lambda_image_uri"
-            else
-              echo "Error: Neither TF_VAR_lambda_image_uri nor DEFAULT_LAMBDA_IMAGE_URI is set."
-              echo "DEFAULT_LAMBDA_IMAGE_URI=${DEFAULT_LAMBDA_IMAGE_URI:-not set}"
-              exit 1
-            fi
-          else
-            echo "TF_VAR_lambda_image_uri already set: $TF_VAR_lambda_image_uri"
-          fi
-          
           terraform init
-
+      - |
+          echo "Running Terraform ${TF_ACTION}..."
           if [ "$TF_ACTION" = "plan" ]; then
-            echo "Running Terraform plan..."
-            echo "TF_VAR_lambda_image_uri=${TF_VAR_lambda_image_uri:-not set}"
-            if [ -f "${TF_VAR_environment}.tfvars" ]; then
-              terraform plan -out=tfplan -var-file="${TF_VAR_environment}.tfvars"
-            else
-              terraform plan -out=tfplan
-            fi
+            terraform plan -out=tfplan
           elif [ "$TF_ACTION" = "apply" ]; then
-            echo "Applying Terraform configuration..."
             if [ -f "tfplan" ]; then
               terraform apply -auto-approve tfplan
             else
@@ -80,8 +58,8 @@ phases:
     commands:
       - |
           echo "Terraform deployment completed on $(date)"
-          echo "Outputting Terraform outputs..."
-          terraform output -json > terraform-outputs.json
+          cd "$CODEBUILD_SRC_DIR/ops/iac"
+          terraform output -json > terraform-outputs.json 2>/dev/null || echo "No outputs available"
 
 artifacts:
   files:
