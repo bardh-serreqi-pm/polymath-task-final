@@ -105,23 +105,6 @@ resource "aws_codepipeline" "terraform" {
     }
   }
 
-  # Approval Stage
-  stage {
-    name = "Approval"
-
-    action {
-      name     = "Manual-Approval"
-      category = "Approval"
-      owner    = "AWS"
-      provider = "Manual"
-      version  = "1"
-
-      configuration = {
-        CustomData = "Please review the Terraform plan and approve for apply."
-      }
-    }
-  }
-
   # Terraform Apply Stage
   stage {
     name = "Apply"
