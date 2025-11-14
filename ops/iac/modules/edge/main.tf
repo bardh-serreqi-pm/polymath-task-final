@@ -44,7 +44,16 @@ resource "aws_cloudfront_response_headers_policy" "cors_with_credentials" {
     access_control_max_age_sec       = 3600
 
     access_control_allow_headers {
-      items = ["*"]
+      items = [
+        "Content-Type",
+        "X-CSRFToken",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+        "Cache-Control",
+        "Pragma"
+      ]
     }
 
     access_control_allow_methods {
@@ -94,11 +103,10 @@ resource "aws_cloudfront_cache_policy" "api_with_cookies" {
       cookie_behavior = "all"
     }
 
+    # Headers are not included in cache key when caching is disabled (TTL = 0)
+    # Headers are forwarded via origin request policy instead
     headers_config {
-      header_behavior = "whitelist"
-      headers {
-        items = ["Authorization", "CloudFront-Forwarded-Proto", "Host"]
-      }
+      header_behavior = "none"
     }
 
     query_strings_config {
@@ -119,7 +127,7 @@ resource "aws_cloudfront_origin_request_policy" "api_with_cookies" {
   headers_config {
     header_behavior = "whitelist"
     headers {
-      items = ["Authorization", "CloudFront-Forwarded-Proto", "Host", "Origin", "Referer", "X-CSRFToken"]
+      items = ["CloudFront-Forwarded-Proto", "Host", "Origin", "Referer", "X-CSRFToken", "Content-Type", "Accept"]
     }
   }
 
