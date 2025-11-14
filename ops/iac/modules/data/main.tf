@@ -75,7 +75,7 @@ resource "random_password" "aurora_master" {
 }
 
 resource "aws_secretsmanager_secret" "aurora_master" {
-  name        = "${var.project_name}/${var.environment}/aurora/master"
+  name        = "${var.project_name}/aurora/master"
   description = "Master credentials for Aurora cluster"
 
   tags = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-aurora-secret" })
