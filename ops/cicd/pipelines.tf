@@ -290,6 +290,10 @@ resource "aws_codepipeline" "backend" {
           {
             name  = "PIPELINE_PHASE"
             value = "health"
+          },
+          {
+            name  = "API_URL"
+            value = var.api_gateway_url
           }
         ])
       }
