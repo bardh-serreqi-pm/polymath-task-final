@@ -33,7 +33,7 @@ resource "aws_cloudwatch_metric_alarm" "api_5xx" {
     label       = "API 5XX Error Rate"
     return_data = true
 
-    expression = "100 * IF(ISZERO(m1), 0, m1 / m2)"
+    expression = "IF(m2 == 0, 0, (m1 / m2) * 100)"
   }
 
   metric_query {
