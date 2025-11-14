@@ -39,35 +39,9 @@ resource "aws_cloudfront_response_headers_policy" "cors_with_credentials" {
   name    = "${var.project_name}-${var.environment}-cors-credentials"
   comment = "CORS policy with credentials support for API Gateway"
 
-  cors_config {
-    access_control_allow_credentials = true
-    access_control_max_age_sec       = 3600
-
-    access_control_allow_headers {
-      items = [
-        "Content-Type",
-        "X-CSRFToken",
-        "Authorization",
-        "Accept",
-        "Origin",
-        "X-Requested-With",
-        "Cache-Control",
-        "Pragma"
-      ]
-    }
-
-    access_control_allow_methods {
-      items = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    }
-
-    # Use CloudFront distribution domain as allowed origin
-    # Since frontend and API are on same distribution, this allows same-origin requests
-    access_control_allow_origins {
-      items = ["https://${aws_cloudfront_distribution.this.domain_name}"]
-    }
-
-    origin_override = true
-  }
+  # CORS is handled by Django middleware (django-cors-headers or custom middleware)
+  # CloudFront response headers policy only adds security headers
+  # This avoids circular dependency with CloudFront distribution domain
 
   security_headers_config {
     content_type_options {

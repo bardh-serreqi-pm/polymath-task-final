@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'Habit_Tracker.middleware.CorsMiddleware',  # Handle CORS headers
     'Habit_Tracker.middleware.StripStagePrefixMiddleware',  # Strip API Gateway stage prefix
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
