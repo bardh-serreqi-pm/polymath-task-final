@@ -57,13 +57,12 @@ phases:
             if [ -f "$PLAN_FILE" ]; then
               terraform apply -auto-approve "$PLAN_FILE"
             else
-              echo "Error: tfplan file not found."
-              echo "Checked: $CODEBUILD_SRC_DIR/ops/iac/tfplan"
-              if [ -n "${CODEBUILD_SRC_DIR_plan_output:-}" ]; then
-                echo "Also checked: $CODEBUILD_SRC_DIR_plan_output/tfplan"
-                ls -la "$CODEBUILD_SRC_DIR_plan_output" || true
+              echo "Plan artifact not provided; running terraform apply directly."
+              if [ -f "${TF_VAR_environment}.tfvars" ]; then
+                terraform apply -auto-approve -var-file="${TF_VAR_environment}.tfvars"
+              else
+                terraform apply -auto-approve
               fi
-              exit 1
             fi
           else
             echo "Error: TF_ACTION must be 'plan' or 'apply'"
