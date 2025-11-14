@@ -163,10 +163,9 @@ if os.environ.get('REDIS_HOST'):
         }
     }
     
-    # Session storage in Redis (optional)
-    # Uncomment to use Redis for sessions
-    # SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-    # SESSION_CACHE_ALIAS = 'default'
+    # Use Redis for session storage in serverless environment
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
 else:
     # Fallback to local memory cache if Redis is not available
     CACHES = {
@@ -174,4 +173,28 @@ else:
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         }
     }
+
+# Session Configuration for Serverless/Lambda
+# Sessions are stored in Redis if available, otherwise in database
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'  # Set to True if using HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'  # Allows cookies to be sent in cross-site requests
+SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request to extend expiry
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# CSRF Configuration for Serverless/Lambda
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_COOKIE_AGE = 86400
+CSRF_COOKIE_HTTPONLY = False  # Must be False for JavaScript to access
+CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False') == 'True'  # Set to True if using HTTPS
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
+CSRF_USE_SESSIONS = False  # Use cookie-based CSRF tokens
+
+# Security Settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
 

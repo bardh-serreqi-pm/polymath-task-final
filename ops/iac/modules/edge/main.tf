@@ -34,6 +34,100 @@ data "aws_cloudfront_response_headers_policy" "simple_cors" {
   name = "Managed-SimpleCORS"
 }
 
+# Custom response headers policy for CORS with credentials
+resource "aws_cloudfront_response_headers_policy" "cors_with_credentials" {
+  name    = "${var.project_name}-${var.environment}-cors-credentials"
+  comment = "CORS policy with credentials support for API Gateway"
+
+  cors_config {
+    access_control_allow_credentials = true
+    access_control_max_age_sec       = 3600
+
+    access_control_allow_headers {
+      items = ["*"]
+    }
+
+    access_control_allow_methods {
+      items = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    }
+
+    access_control_allow_origins {
+      items = ["*"] # In production, replace with specific CloudFront domain
+    }
+
+    origin_override = true
+  }
+
+  security_headers_config {
+    content_type_options {
+      override = true
+    }
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      override                   = true
+    }
+  }
+}
+
+# Custom cache policy for API that forwards cookies
+resource "aws_cloudfront_cache_policy" "api_with_cookies" {
+  name        = "${var.project_name}-${var.environment}-api-cookies"
+  comment     = "Cache policy for API Gateway that forwards cookies for session management"
+  default_ttl = 0
+  max_ttl     = 0
+  min_ttl     = 0
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = false
+    enable_accept_encoding_gzip   = false
+
+    cookies_config {
+      cookie_behavior = "all"
+    }
+
+    headers_config {
+      header_behavior = "whitelist"
+      headers {
+        items = ["Authorization", "CloudFront-Forwarded-Proto", "Host"]
+      }
+    }
+
+    query_strings_config {
+      query_string_behavior = "all"
+    }
+  }
+}
+
+# Custom origin request policy for API that forwards cookies and headers
+resource "aws_cloudfront_origin_request_policy" "api_with_cookies" {
+  name    = "${var.project_name}-${var.environment}-api-origin-request"
+  comment = "Origin request policy for API Gateway that forwards cookies and headers"
+
+  cookies_config {
+    cookie_behavior = "all"
+  }
+
+  headers_config {
+    header_behavior = "whitelist"
+    headers {
+      items = ["Authorization", "CloudFront-Forwarded-Proto", "Host", "Origin", "Referer", "X-CSRFToken"]
+    }
+  }
+
+  query_strings_config {
+    query_string_behavior = "all"
+  }
+}
+
 resource "aws_cloudfront_origin_access_control" "frontend" {
   name                              = "${var.project_name}-${var.environment}-frontend-oac"
   description                       = "Access control for frontend S3 origin"
@@ -131,9 +225,9 @@ resource "aws_cloudfront_distribution" "this" {
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
 
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
-    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.simple_cors.id
+    cache_policy_id            = aws_cloudfront_cache_policy.api_with_cookies.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
   }
 
   restrictions {
