@@ -150,7 +150,6 @@ resource "aws_lambda_function" "api" {
       {
         ENVIRONMENT                  = var.environment
         PROJECT_NAME                 = var.project_name
-        AWS_REGION                   = data.aws_region.current.name
         AWS_SECRET_NAME              = var.aurora_secret_arn
         AWS_SSM_PREFIX               = "/${var.project_name}/${var.environment}"
         AURORA_SECRET_ARN            = var.aurora_secret_arn
