@@ -8,9 +8,8 @@ provider "aws" {
     tags = merge(
       var.tags,
       {
-        Environment = var.environment
+        Environment = "staging"
         Project     = "ApprenticeFinal"
-        ManagedBy   = "Terraform"
       }
     )
   }

@@ -336,10 +336,6 @@ resource "aws_codepipeline" "backend" {
           {
             name  = "TF_ACTION"
             value = "apply"
-          },
-          {
-            name  = "TF_VAR_environment"
-            value = "production"
           }
         ])
       }
@@ -514,4 +510,5 @@ resource "aws_codepipeline" "frontend" {
     Name = "${var.project_name}-frontend-pipeline-${var.environment}"
   }
 }
+
 
