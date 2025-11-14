@@ -40,13 +40,29 @@ phases:
           terraform init
       - |
           echo "Running Terraform ${TF_ACTION}..."
+          cd "$CODEBUILD_SRC_DIR/ops/iac"
           if [ "$TF_ACTION" = "plan" ]; then
             terraform plan -out=tfplan
+            cp tfplan "$CODEBUILD_SRC_DIR/tfplan"
+            echo "Plan file created: tfplan"
           elif [ "$TF_ACTION" = "apply" ]; then
-            if [ -f "tfplan" ]; then
-              terraform apply -auto-approve tfplan
+            cd "$CODEBUILD_SRC_DIR/ops/iac"
+            PLAN_FILE="tfplan"
+            if [ -n "${CODEBUILD_SRC_DIR_plan_output:-}" ]; then
+              if [ -f "$CODEBUILD_SRC_DIR_plan_output/tfplan" ]; then
+                cp "$CODEBUILD_SRC_DIR_plan_output/tfplan" "$PLAN_FILE"
+                echo "Copied plan file from plan_output artifact"
+              fi
+            fi
+            if [ -f "$PLAN_FILE" ]; then
+              terraform apply -auto-approve "$PLAN_FILE"
             else
-              echo "Error: tfplan file not found. Run plan first."
+              echo "Error: tfplan file not found."
+              echo "Checked: $CODEBUILD_SRC_DIR/ops/iac/tfplan"
+              if [ -n "${CODEBUILD_SRC_DIR_plan_output:-}" ]; then
+                echo "Also checked: $CODEBUILD_SRC_DIR_plan_output/tfplan"
+                ls -la "$CODEBUILD_SRC_DIR_plan_output" || true
+              fi
               exit 1
             fi
           else
@@ -64,3 +80,4 @@ phases:
 artifacts:
   files:
     - terraform-outputs.json
+    - tfplan

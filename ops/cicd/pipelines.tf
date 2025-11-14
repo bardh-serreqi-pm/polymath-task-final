@@ -86,12 +86,13 @@ resource "aws_codepipeline" "terraform" {
     name = "Plan"
 
     action {
-      name            = "Terraform-Plan"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source_output"]
-      version         = "1"
+      name             = "Terraform-Plan"
+      category         = "Build"
+      owner            = "AWS"
+      provider         = "CodeBuild"
+      input_artifacts  = ["source_output"]
+      output_artifacts = ["plan_output"]
+      version          = "1"
 
       configuration = {
         ProjectName = aws_codebuild_project.terraform.name
@@ -114,11 +115,12 @@ resource "aws_codepipeline" "terraform" {
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
-      input_artifacts = ["source_output"]
+      input_artifacts = ["source_output", "plan_output"]
       version         = "1"
 
       configuration = {
-        ProjectName = aws_codebuild_project.terraform.name
+        ProjectName   = aws_codebuild_project.terraform.name
+        PrimarySource = "source_output"
         EnvironmentVariables = jsonencode([
           {
             name  = "TF_ACTION"
