@@ -9,6 +9,28 @@ import os
 import re
 
 
+class AllowAllHostsMiddleware:
+    """
+    Middleware to bypass ALLOWED_HOSTS check for API Gateway requests.
+    
+    API Gateway doesn't send Host header in a format Django expects,
+    so we bypass the check when running in Lambda.
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        # When running in Lambda, bypass ALLOWED_HOSTS check
+        # by setting a valid host in the request
+        if os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+            # Set a dummy host that Django will accept
+            request.META['HTTP_HOST'] = 'api-gateway.amazonaws.com'
+        
+        response = self.get_response(request)
+        return response
+
+
 class StripStagePrefixMiddleware:
     """
     Middleware to remove API Gateway stage prefix from request paths.

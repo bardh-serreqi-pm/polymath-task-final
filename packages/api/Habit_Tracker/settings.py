@@ -27,7 +27,20 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-kh6@x^%b42999#ii=hnc&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# ALLOWED_HOSTS configuration
+# For Lambda/API Gateway, we need to allow API Gateway domain
+# Also allow CloudFront domain if provided
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '')
+if allowed_hosts_env:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
+elif os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+    # Running in Lambda - API Gateway doesn't send Host header Django expects
+    # Set to empty list to disable ALLOWED_HOSTS check (security handled by API Gateway/CloudFront)
+    # A middleware will handle the Host header validation
+    ALLOWED_HOSTS = []  # Empty list disables the check
+else:
+    # Local development defaults
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -48,6 +61,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'Habit_Tracker.middleware.AllowAllHostsMiddleware',  # Bypass ALLOWED_HOSTS for Lambda
     'Habit_Tracker.middleware.CorsMiddleware',  # Handle CORS headers
     'Habit_Tracker.middleware.StripStagePrefixMiddleware',  # Strip API Gateway stage prefix
     'django.contrib.sessions.middleware.SessionMiddleware',

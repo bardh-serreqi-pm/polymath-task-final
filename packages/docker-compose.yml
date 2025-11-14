@@ -7,6 +7,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-habit_tracker}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_INITDB_ARGS: "-U ${POSTGRES_USER:-postgres}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -39,8 +40,8 @@ services:
   # Django API Backend
   api:
     build:
-      context: .
-      dockerfile: api/Dockerfile
+      context: ./api
+      dockerfile: Dockerfile.dev
     container_name: habit_tracker_api
     command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
     volumes:

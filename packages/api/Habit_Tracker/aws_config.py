@@ -117,5 +117,9 @@ def load_aws_config():
     
     allowed_hosts = get_parameter(f'{ssm_prefix}/django/allowed_hosts')
     if allowed_hosts:
-        os.environ.setdefault('ALLOWED_HOSTS', allowed_hosts)
+        os.environ['ALLOWED_HOSTS'] = allowed_hosts
+    else:
+        # Default: allow all hosts for API Gateway (API Gateway doesn't send Host header in a way Django expects)
+        # In production, set this via SSM Parameter Store with specific domains
+        os.environ.setdefault('ALLOWED_HOSTS', '*')
 
