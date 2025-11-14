@@ -157,6 +157,7 @@ resource "aws_lambda_function" "api" {
         REDIS_ENDPOINT_PARAM         = var.redis_endpoint_param
         DJANGO_SETTINGS_MODULE       = "Habit_Tracker.settings"
         DB_MIGRATE_ON_START          = "false"
+        API_GATEWAY_STAGE            = var.environment # Stage name for middleware to strip prefix
       },
       var.lambda_environment
     )
@@ -182,6 +183,9 @@ resource "aws_lambda_permission" "apigw" {
 resource "aws_apigatewayv2_api" "api" {
   name          = "${var.project_name}-${var.environment}-http-api"
   protocol_type = "HTTP"
+
+  # CORS is handled by CloudFront response headers policy
+  # API Gateway CORS is not needed when using CloudFront in front
 
   tags = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-http-api" })
 }

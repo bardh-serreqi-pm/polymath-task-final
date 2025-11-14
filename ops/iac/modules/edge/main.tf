@@ -60,8 +60,10 @@ resource "aws_cloudfront_response_headers_policy" "cors_with_credentials" {
       items = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     }
 
+    # Use CloudFront distribution domain as allowed origin
+    # Since frontend and API are on same distribution, this allows same-origin requests
     access_control_allow_origins {
-      items = ["*"] # In production, replace with specific CloudFront domain
+      items = ["https://${aws_cloudfront_distribution.this.domain_name}"]
     }
 
     origin_override = true
