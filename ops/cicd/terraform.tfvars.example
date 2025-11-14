@@ -1,7 +1,7 @@
 # Example Terraform variables file for CI/CD pipeline
 # Copy this file to terraform.tfvars and fill in your values
 
-project_name = "habit-tracker"
+project_name = "apprentice-final"
 environment  = "staging"
 
 # GitHub Configuration
@@ -13,12 +13,12 @@ github_branch = "main"
 aws_region = "us-east-1"
 
 # Artifact Locations (populate from IAC module outputs)
-api_ecr_repository_url     = "123456789012.dkr.ecr.us-east-1.amazonaws.com/habit-tracker-staging-api"
-frontend_bucket_name       = "habit-tracker-staging-frontend"
+api_ecr_repository_url     = "123456789012.dkr.ecr.us-east-1.amazonaws.com/apprentice-final-staging-api"
+frontend_bucket_name       = "apprentice-final-staging-frontend"
 cloudfront_distribution_id = "EXAMPLE123456"
 api_gateway_url            = "https://abc123.execute-api.us-east-1.amazonaws.com/staging"
-alerts_sns_topic_arn       = "arn:aws:sns:us-east-1:123456789012:habit-tracker-staging-alerts"
-lambda_image_default_uri   = "123456789012.dkr.ecr.us-east-1.amazonaws.com/habit-tracker-staging-api:latest"
+alerts_sns_topic_arn       = "arn:aws:sns:us-east-1:123456789012:apprentice-final-staging-alerts"
+lambda_image_default_uri   = "123456789012.dkr.ecr.us-east-1.amazonaws.com/apprentice-final-staging-api:latest"
 
 # Terraform State Configuration
 terraform_state_bucket     = "your-terraform-state-bucket-name"
