@@ -184,8 +184,18 @@ resource "aws_apigatewayv2_api" "api" {
   name          = "${var.project_name}-${var.environment}-http-api"
   protocol_type = "HTTP"
 
-  # CORS is handled by CloudFront response headers policy
-  # API Gateway CORS is not needed when using CloudFront in front
+  # CORS configuration for API Gateway HTTP API
+  # This handles OPTIONS preflight requests automatically
+  # Note: Credentials are handled by Django middleware, not here
+  # (API Gateway can't use * with credentials, so we handle it in Django)
+  cors_configuration {
+    allow_credentials = false # Handled by Django middleware instead
+    allow_headers     = ["*"]
+    allow_methods     = ["*"]
+    allow_origins     = ["*"]
+    expose_headers    = ["*"]
+    max_age           = 3600
+  }
 
   tags = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-http-api" })
 }

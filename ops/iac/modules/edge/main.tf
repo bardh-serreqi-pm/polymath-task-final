@@ -178,9 +178,156 @@ resource "aws_cloudfront_distribution" "this" {
     origin_request_policy_id = data.aws_cloudfront_origin_request_policy.cors_s3.id
   }
 
+  # Route API endpoints to API Gateway
   ordered_cache_behavior {
     path_pattern           = "/api/*"
     allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  # Route Django authentication and admin routes to API Gateway
+  ordered_cache_behavior {
+    path_pattern           = "/Login"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/Register*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/register*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/Profile/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/Logout"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/admin/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/health/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  # Route Django app routes (habits, tasks, etc.) to API Gateway
+  ordered_cache_behavior {
+    path_pattern           = "/Add-Habit/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/Habit-Manager/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/Habit-Infos/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST", "DELETE"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/Habits-Analysis/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/delete-habit/*"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST", "DELETE"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
