@@ -87,33 +87,9 @@ resource "aws_cloudfront_response_headers_policy" "cors_with_credentials" {
   }
 }
 
-# Custom cache policy for API that forwards cookies
-resource "aws_cloudfront_cache_policy" "api_with_cookies" {
-  name        = "${var.project_name}-${var.environment}-api-cookies"
-  comment     = "Cache policy for API Gateway that forwards cookies for session management"
-  default_ttl = 0
-  max_ttl     = 0
-  min_ttl     = 0
-
-  parameters_in_cache_key_and_forwarded_to_origin {
-    enable_accept_encoding_brotli = false
-    enable_accept_encoding_gzip   = false
-
-    cookies_config {
-      cookie_behavior = "all"
-    }
-
-    # Headers are not included in cache key when caching is disabled (TTL = 0)
-    # Headers are forwarded via origin request policy instead
-    headers_config {
-      header_behavior = "none"
-    }
-
-    query_strings_config {
-      query_string_behavior = "all"
-    }
-  }
-}
+# Note: When caching is disabled (TTL = 0), cookies cannot be included in cache policy
+# Cookies are forwarded to origin via the origin request policy instead
+# Using managed "Managed-CachingDisabled" policy for cache policy
 
 # Custom origin request policy for API that forwards cookies and headers
 resource "aws_cloudfront_origin_request_policy" "api_with_cookies" {
@@ -233,7 +209,7 @@ resource "aws_cloudfront_distribution" "this" {
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
 
-    cache_policy_id            = aws_cloudfront_cache_policy.api_with_cookies.id
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
     origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
     response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
   }
