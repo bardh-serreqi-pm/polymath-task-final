@@ -118,7 +118,10 @@ resource "aws_iam_role_policy" "codepipeline_backend_policy" {
           "codebuild:BatchGetBuilds",
           "codebuild:StartBuild"
         ]
-        Resource = aws_codebuild_project.backend.arn
+        Resource = [
+          aws_codebuild_project.backend.arn,
+          aws_codebuild_project.terraform.arn
+        ]
       },
       {
         Effect = "Allow"
