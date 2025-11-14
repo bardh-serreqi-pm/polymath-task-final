@@ -95,10 +95,16 @@ resource "aws_secretsmanager_secret_version" "aurora_master" {
   depends_on = [aws_rds_cluster.aurora]
 }
 
+# Get available Aurora PostgreSQL engine versions
+data "aws_rds_engine_version" "aurora_postgresql" {
+  engine             = "aurora-postgresql"
+  preferred_versions = ["16.1", "15.4", "15.3", "14.10", "14.9", "13.12", "13.11"]
+}
+
 resource "aws_rds_cluster" "aurora" {
   engine                       = "aurora-postgresql"
   engine_mode                  = "provisioned"
-  engine_version               = "15.2"
+  engine_version               = data.aws_rds_engine_version.aurora_postgresql.version
   database_name                = var.db_name
   master_username              = var.db_master_username
   master_password              = random_password.aurora_master.result
