@@ -177,25 +177,17 @@ resource "aws_lambda_permission" "apigw" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.api.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
+  # For HTTP API, use the stage ARN format: arn:aws:execute-api:region:account:api-id/stage-name/*/*
+  source_arn = "${aws_apigatewayv2_api.api.execution_arn}/${aws_apigatewayv2_stage.api.name}/*/*"
 }
 
 resource "aws_apigatewayv2_api" "api" {
   name          = "${var.project_name}-${var.environment}-http-api"
   protocol_type = "HTTP"
 
-  # CORS configuration for API Gateway HTTP API
-  # This handles OPTIONS preflight requests automatically
-  # Note: Credentials are handled by Django middleware, not here
-  # (API Gateway can't use * with credentials, so we handle it in Django)
-  cors_configuration {
-    allow_credentials = false # Handled by Django middleware instead
-    allow_headers     = ["*"]
-    allow_methods     = ["*"]
-    allow_origins     = ["*"]
-    expose_headers    = ["*"]
-    max_age           = 3600
-  }
+  # CORS is handled by Django middleware and CloudFront response headers
+  # API Gateway CORS can cause ForbiddenException when combined with CloudFront
+  # Removing CORS from API Gateway to avoid conflicts
 
   tags = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-http-api" })
 }
@@ -209,9 +201,72 @@ resource "aws_apigatewayv2_integration" "lambda" {
   timeout_milliseconds   = 29000
 }
 
-resource "aws_apigatewayv2_route" "default" {
+# Explicit routes for better control and monitoring
+# These routes are matched in order, so more specific routes should come first
+
+# OPTIONS routes for CORS preflight
+resource "aws_apigatewayv2_route" "options_proxy" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "$default"
+  route_key = "OPTIONS /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "options_root" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "OPTIONS /"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# API endpoints
+resource "aws_apigatewayv2_route" "api_proxy" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /api/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# Health check
+resource "aws_apigatewayv2_route" "health" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /health/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# Django authentication routes
+resource "aws_apigatewayv2_route" "login" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Login"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "register" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Register/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "logout" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Logout"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "profile" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Profile/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# Admin routes
+resource "aws_apigatewayv2_route" "admin" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /admin/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# Django app routes
+resource "aws_apigatewayv2_route" "habits" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
