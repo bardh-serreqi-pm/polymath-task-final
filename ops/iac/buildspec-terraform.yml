@@ -17,8 +17,8 @@ phases:
       - |
           echo "Checking for lambda image URI..."
           IMAGE_FILE="$CODEBUILD_SRC_DIR/lambda-image.json"
-          if [ ! -f "$IMAGE_FILE" ] && [ -n "${CODEBUILD_SRC_DIR_build_output:-}" ]; then
-            IMAGE_FILE="$CODEBUILD_SRC_DIR_build_output/lambda-image.json"
+          if [ ! -f "$IMAGE_FILE" ]; then
+            IMAGE_FILE="$(find \"$CODEBUILD_SRC_DIR\" -name \"lambda-image.json\" -print -quit || true)"
           fi
           if [ -f "$IMAGE_FILE" ]; then
             echo "Discovered lambda-image.json artifact at $IMAGE_FILE"
