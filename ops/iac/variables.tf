@@ -88,3 +88,22 @@ variable "frontend_bucket_name" {
   default     = ""
 }
 
+variable "django_secret_key" {
+  description = "Django SECRET_KEY (if not provided, will be generated)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "django_debug" {
+  description = "Django DEBUG setting"
+  type        = string
+  default     = "False"
+}
+
+variable "django_allowed_hosts" {
+  description = "Comma-separated list of allowed hosts for Django"
+  type        = string
+  default     = "*"
+}
+

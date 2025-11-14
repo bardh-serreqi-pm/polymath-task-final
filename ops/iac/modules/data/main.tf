@@ -11,6 +11,15 @@ locals {
   )
 
   frontend_bucket_name = var.frontend_bucket_name != "" ? var.frontend_bucket_name : "${var.project_name}-${var.environment}-frontend"
+
+  # Generate Django secret key if not provided
+  django_secret_key = var.django_secret_key != "" ? var.django_secret_key : random_password.django_secret_key.result
+}
+
+# Generate Django secret key if not provided
+resource "random_password" "django_secret_key" {
+  length  = 50
+  special = true
 }
 
 resource "aws_security_group" "aurora" {
@@ -186,6 +195,37 @@ resource "aws_ssm_parameter" "redis_endpoint" {
   description = "Redis endpoint for ${var.environment}"
   type        = "String"
   value       = "${aws_elasticache_serverless_cache.redis.endpoint[0].address}:${aws_elasticache_serverless_cache.redis.endpoint[0].port}"
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
+# Django configuration parameters
+resource "aws_ssm_parameter" "django_secret_key" {
+  name        = "/${var.project_name}/${var.environment}/django/secret_key"
+  description = "Django SECRET_KEY for ${var.environment}"
+  type        = "SecureString"
+  value       = local.django_secret_key
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
+resource "aws_ssm_parameter" "django_debug" {
+  name        = "/${var.project_name}/${var.environment}/django/debug"
+  description = "Django DEBUG setting for ${var.environment}"
+  type        = "String"
+  value       = var.django_debug
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
+resource "aws_ssm_parameter" "django_allowed_hosts" {
+  name        = "/${var.project_name}/${var.environment}/django/allowed_hosts"
+  description = "Django ALLOWED_HOSTS for ${var.environment}"
+  type        = "String"
+  value       = var.django_allowed_hosts
   overwrite   = true
 
   tags = local.common_tags

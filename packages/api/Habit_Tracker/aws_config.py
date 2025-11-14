@@ -33,13 +33,14 @@ def get_secret(secret_name):
         return {'value': secret_string}
 
 
-def get_parameter(parameter_name, decrypt=False):
+def get_parameter(parameter_name, decrypt=False, required=False):
     """
     Retrieve a parameter from AWS SSM Parameter Store.
     
     Args:
         parameter_name: Name of the parameter
         decrypt: Whether to decrypt SecureString parameters
+        required: If True, log error; if False, silently return None
         
     Returns:
         str: Parameter value, or None if not found
@@ -51,8 +52,15 @@ def get_parameter(parameter_name, decrypt=False):
         )
         return response['Parameter']['Value']
     except ClientError as e:
-        print(f"Error retrieving parameter {parameter_name}: {e}")
-        return None
+        error_code = e.response.get('Error', {}).get('Code', '')
+        if error_code == 'ParameterNotFound':
+            if required:
+                print(f"Error: Required parameter {parameter_name} not found: {e}")
+            # Silently return None for optional parameters
+            return None
+        else:
+            print(f"Error retrieving parameter {parameter_name}: {e}")
+            return None
 
 
 def load_aws_config():
@@ -106,16 +114,16 @@ def load_aws_config():
             os.environ['REDIS_HOST'] = redis_endpoint
             os.environ.setdefault('REDIS_PORT', '6379')
     
-    # Django settings
-    django_secret_key = get_parameter(f'{ssm_prefix}/django/secret_key', decrypt=True)
+    # Django settings (optional - will use defaults if not found)
+    django_secret_key = get_parameter(f'{ssm_prefix}/django/secret_key', decrypt=True, required=False)
     if django_secret_key:
         os.environ.setdefault('SECRET_KEY', django_secret_key)
     
-    django_debug = get_parameter(f'{ssm_prefix}/django/debug')
+    django_debug = get_parameter(f'{ssm_prefix}/django/debug', required=False)
     if django_debug:
         os.environ.setdefault('DEBUG', django_debug)
     
-    allowed_hosts = get_parameter(f'{ssm_prefix}/django/allowed_hosts')
+    allowed_hosts = get_parameter(f'{ssm_prefix}/django/allowed_hosts', required=False)
     if allowed_hosts:
         os.environ['ALLOWED_HOSTS'] = allowed_hosts
     else:

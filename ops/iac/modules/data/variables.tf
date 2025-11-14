@@ -59,4 +59,22 @@ variable "aurora_max_capacity" {
   default     = 4
 }
 
+variable "django_secret_key" {
+  description = "Django SECRET_KEY for the application."
+  type        = string
+  sensitive   = true
+}
+
+variable "django_debug" {
+  description = "Django DEBUG setting (true/false as string)."
+  type        = string
+  default     = "False"
+}
+
+variable "django_allowed_hosts" {
+  description = "Comma-separated list of allowed hosts for Django."
+  type        = string
+  default     = "*"
+}
+
 

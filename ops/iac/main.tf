@@ -23,6 +23,9 @@ module "data" {
   aurora_min_capacity   = var.aurora_min_capacity
   aurora_max_capacity   = var.aurora_max_capacity
   frontend_bucket_name  = var.frontend_bucket_name
+  django_secret_key     = var.django_secret_key
+  django_debug          = var.django_debug
+  django_allowed_hosts  = var.django_allowed_hosts
 }
 
 module "compute" {
