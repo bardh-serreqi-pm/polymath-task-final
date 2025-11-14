@@ -272,8 +272,8 @@ resource "aws_iam_role_policy" "codepipeline_frontend_policy" {
         Resource = [
           aws_s3_bucket.pipeline_artifacts.arn,
           "${aws_s3_bucket.pipeline_artifacts.arn}/*",
-          "arn:aws:s3:::${var.frontend_bucket_name}",
-          "arn:aws:s3:::${var.frontend_bucket_name}/*"
+          "arn:aws:s3:::${local.frontend_bucket_name}",
+          "arn:aws:s3:::${local.frontend_bucket_name}/*"
         ]
       },
       {
@@ -346,8 +346,8 @@ resource "aws_iam_role_policy" "codebuild_frontend_policy" {
         ]
         Resource = [
           "${aws_s3_bucket.pipeline_artifacts.arn}/*",
-          "arn:aws:s3:::${var.frontend_bucket_name}",
-          "arn:aws:s3:::${var.frontend_bucket_name}/*"
+          "arn:aws:s3:::${local.frontend_bucket_name}",
+          "arn:aws:s3:::${local.frontend_bucket_name}/*"
         ]
       },
       {
@@ -357,7 +357,7 @@ resource "aws_iam_role_policy" "codebuild_frontend_policy" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::${var.frontend_bucket_name}"
+          "arn:aws:s3:::${local.frontend_bucket_name}"
         ]
       },
       {

@@ -36,7 +36,7 @@ resource "aws_codebuild_project" "terraform" {
     }
     environment_variable {
       name  = "DEFAULT_LAMBDA_IMAGE_URI"
-      value = var.lambda_image_default_uri
+      value = local.lambda_image_default_uri
     }
   }
 
@@ -168,7 +168,7 @@ resource "aws_codebuild_project" "backend" {
     }
     environment_variable {
       name  = "ECR_REPOSITORY"
-      value = var.api_ecr_repository_url
+      value = local.api_ecr_repository_url
     }
     environment_variable {
       name  = "ENVIRONMENT"
@@ -293,7 +293,7 @@ resource "aws_codepipeline" "backend" {
           },
           {
             name  = "API_URL"
-            value = var.api_gateway_url
+            value = local.api_gateway_url
           }
         ])
       }
@@ -387,11 +387,11 @@ resource "aws_codebuild_project" "frontend" {
     }
     environment_variable {
       name  = "S3_BUCKET"
-      value = var.frontend_bucket_name
+      value = local.frontend_bucket_name
     }
     environment_variable {
       name  = "CLOUDFRONT_DISTRIBUTION_ID"
-      value = var.cloudfront_distribution_id
+      value = local.cloudfront_distribution_id
     }
   }
 
@@ -468,7 +468,7 @@ resource "aws_codepipeline" "frontend" {
       version         = "1"
 
       configuration = {
-        BucketName = var.frontend_bucket_name
+        BucketName = local.frontend_bucket_name
         Extract    = "true"
       }
     }
@@ -504,7 +504,7 @@ resource "aws_codepipeline" "frontend" {
       version         = "1"
 
       configuration = {
-        BucketName = var.frontend_bucket_name
+        BucketName = local.frontend_bucket_name
         Extract    = "true"
       }
     }

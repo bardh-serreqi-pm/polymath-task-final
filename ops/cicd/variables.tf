@@ -34,23 +34,27 @@ variable "aws_region" {
 }
 
 variable "api_ecr_repository_url" {
-  description = "Full URL of the ECR repository for the Lambda container image (from IAC outputs)"
+  description = "Full URL of the ECR repository for the Lambda container image (optional, will be read from IAC remote state if not provided)"
   type        = string
+  default     = ""
 }
 
 variable "frontend_bucket_name" {
-  description = "S3 bucket where the frontend build will be uploaded"
+  description = "S3 bucket where the frontend build will be uploaded (optional, will be read from IAC remote state if not provided)"
   type        = string
+  default     = ""
 }
 
 variable "cloudfront_distribution_id" {
-  description = "CloudFront distribution ID for cache invalidation"
+  description = "CloudFront distribution ID for cache invalidation (optional, will be read from IAC remote state if not provided)"
   type        = string
+  default     = ""
 }
 
 variable "api_gateway_url" {
-  description = "Invoke URL for API Gateway used in health checks"
+  description = "Invoke URL for API Gateway used in health checks (optional, will be read from IAC remote state if not provided)"
   type        = string
+  default     = ""
 }
 
 variable "lambda_image_default_uri" {
@@ -60,8 +64,9 @@ variable "lambda_image_default_uri" {
 }
 
 variable "alerts_sns_topic_arn" {
-  description = "SNS topic ARN for pipeline notifications"
+  description = "SNS topic ARN for pipeline notifications (optional, will be read from IAC remote state if not provided)"
   type        = string
+  default     = ""
 }
 
 variable "terraform_state_bucket" {

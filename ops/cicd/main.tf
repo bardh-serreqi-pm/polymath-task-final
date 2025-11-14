@@ -21,6 +21,29 @@ data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
+# Remote state data source to read IAC module outputs
+data "terraform_remote_state" "iac" {
+  backend = "s3"
+
+  config = {
+    bucket         = var.terraform_state_bucket
+    key            = "iac/state/terraform.tfstate"
+    region         = var.aws_region
+    dynamodb_table = var.terraform_state_lock_table
+    encrypt        = true
+  }
+}
+
+# Local values to use remote state outputs when variables are not provided
+locals {
+  api_gateway_url            = var.api_gateway_url != "" ? var.api_gateway_url : try(data.terraform_remote_state.iac.outputs.api_gateway_url, "")
+  api_ecr_repository_url     = var.api_ecr_repository_url != "" ? var.api_ecr_repository_url : try(data.terraform_remote_state.iac.outputs.api_ecr_repository_url, "")
+  frontend_bucket_name       = var.frontend_bucket_name != "" ? var.frontend_bucket_name : try(data.terraform_remote_state.iac.outputs.frontend_bucket_name, "")
+  cloudfront_distribution_id = var.cloudfront_distribution_id != "" ? var.cloudfront_distribution_id : try(data.terraform_remote_state.iac.outputs.cloudfront_distribution_id, "")
+  alerts_sns_topic_arn       = var.alerts_sns_topic_arn != "" ? var.alerts_sns_topic_arn : try(data.terraform_remote_state.iac.outputs.alerts_sns_topic_arn, "")
+  lambda_image_default_uri   = var.lambda_image_default_uri != "" ? var.lambda_image_default_uri : try("${data.terraform_remote_state.iac.outputs.api_ecr_repository_url}:latest", "")
+}
+
 # ============================================================================
 # PIPELINE-SPECIFIC RESOURCES ONLY
 # ============================================================================

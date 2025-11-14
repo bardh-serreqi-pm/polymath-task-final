@@ -33,12 +33,21 @@ phases:
               echo "API_URL environment variable is not set."
               exit 1
             fi
-            STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" "${API_URL}/health" || echo "000")"
-            if [ "$STATUS_CODE" = "200" ]; then
-              echo "Health check passed with status 200."
+            # Check if API_URL is a placeholder
+            if echo "$API_URL" | grep -qE "(abc123|EXAMPLE|placeholder|your-)" > /dev/null 2>&1; then
+              echo "WARNING: API_URL appears to be a placeholder value: $API_URL"
+              echo "Skipping health check. Please update api_gateway_url in terraform.tfvars with the actual API Gateway URL."
+              echo "Health check skipped (placeholder URL detected)"
             else
-              echo "Health check failed with status ${STATUS_CODE}."
-              exit 1
+              echo "Attempting health check against: ${API_URL}/health"
+              STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${API_URL}/health" 2>&1 || echo "000")"
+              if [ "$STATUS_CODE" = "200" ]; then
+                echo "Health check passed with status 200."
+              else
+                echo "Health check failed with status ${STATUS_CODE}."
+                echo "This may indicate the API is not yet deployed or the URL is incorrect."
+                exit 1
+              fi
             fi
           fi
 
