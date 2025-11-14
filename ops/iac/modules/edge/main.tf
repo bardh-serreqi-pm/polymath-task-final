@@ -181,7 +181,7 @@ resource "aws_cloudfront_distribution" "this" {
   # Route API endpoints to API Gateway
   ordered_cache_behavior {
     path_pattern           = "/api/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -194,7 +194,7 @@ resource "aws_cloudfront_distribution" "this" {
   # Route Django authentication and admin routes to API Gateway
   ordered_cache_behavior {
     path_pattern           = "/Login"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -206,7 +206,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/Register*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -218,7 +218,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/register*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -230,7 +230,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/Profile/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -242,7 +242,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/Logout"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -254,7 +254,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/admin/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -266,7 +266,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/health/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    allowed_methods        = ["HEAD", "GET", "OPTIONS"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -279,7 +279,7 @@ resource "aws_cloudfront_distribution" "this" {
   # Route Django app routes (habits, tasks, etc.) to API Gateway
   ordered_cache_behavior {
     path_pattern           = "/Add-Habit/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -291,7 +291,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/Habit-Manager/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    allowed_methods        = ["HEAD", "GET", "OPTIONS"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -303,7 +303,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/Habit-Infos/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST", "DELETE"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -315,7 +315,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/Habits-Analysis/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
@@ -327,7 +327,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   ordered_cache_behavior {
     path_pattern           = "/delete-habit/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST", "DELETE"]
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
