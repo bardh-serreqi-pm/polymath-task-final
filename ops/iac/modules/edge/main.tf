@@ -13,6 +13,27 @@ locals {
   )
 }
 
+# Data sources for CloudFront managed cache policies
+data "aws_cloudfront_cache_policy" "caching_optimized" {
+  name = "Managed-CachingOptimized"
+}
+
+data "aws_cloudfront_cache_policy" "caching_disabled" {
+  name = "Managed-CachingDisabled"
+}
+
+data "aws_cloudfront_origin_request_policy" "cors_s3" {
+  name = "Managed-CORS-S3Origin"
+}
+
+data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
+  name = "Managed-AllViewerExceptHostHeader"
+}
+
+data "aws_cloudfront_response_headers_policy" "simple_cors" {
+  name = "Managed-SimpleCORS"
+}
+
 resource "aws_cloudfront_origin_access_control" "frontend" {
   name                              = "${var.project_name}-${var.environment}-frontend-oac"
   description                       = "Access control for frontend S3 origin"
@@ -99,8 +120,8 @@ resource "aws_cloudfront_distribution" "this" {
     target_origin_id       = local.frontend_origin_id
     viewer_protocol_policy = "redirect-to-https"
 
-    cache_policy_id          = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
-    origin_request_policy_id = "413fd1bd-4f22-4681-beca-5e857496ad9f" # Managed-CORS-S3Origin
+    cache_policy_id          = data.aws_cloudfront_cache_policy.caching_optimized.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.cors_s3.id
   }
 
   ordered_cache_behavior {
@@ -110,9 +131,9 @@ resource "aws_cloudfront_distribution" "this" {
     target_origin_id       = local.api_origin_id
     viewer_protocol_policy = "https-only"
 
-    cache_policy_id            = "216adef6-5c7f-47e4-b989-5492eafa07d3" # Managed-CachingDisabled
-    origin_request_policy_id   = "088c1a12-3b52-40d3-a960-350dcb7126de" # Managed-AllViewerExceptHostHeader
-    response_headers_policy_id = "b69b958a-1b4e-4f23-94e0-5799a1112d87" # Managed-SimpleCORS
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.simple_cors.id
   }
 
   restrictions {

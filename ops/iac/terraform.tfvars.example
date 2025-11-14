@@ -1,7 +1,7 @@
 # Example Terraform variables file for IAC module
 # Copy this file to terraform.tfvars and fill in your values
 
-project_name = "habit-tracker"
+project_name = "apprentice-final"
 environment  = "staging"
 
 # AWS Configuration
@@ -20,7 +20,7 @@ private_subnet_cidrs = ["10.20.16.0/24", "10.20.17.0/24"]
 
 # Compute configuration
 # Set by CI/CD with the built Lambda image URI
-lambda_image_uri = "123456789012.dkr.ecr.us-east-1.amazonaws.com/habit-tracker-staging:latest"
+lambda_image_uri = "123456789012.dkr.ecr.us-east-1.amazonaws.com/apprentice-final-staging-api:latest"
 
 lambda_environment = {
   DJANGO_SETTINGS_MODULE = "Habit_Tracker.settings"
@@ -28,12 +28,12 @@ lambda_environment = {
 }
 
 # Edge configuration
-# frontend_bucket_name = "habit-tracker-staging-frontend"
+# frontend_bucket_name = "apprentice-final-staging-frontend"
 
 # Tags
 tags = {
   Project   = "ApprenticeFinal"
   ManagedBy = "Terraform"
-  Owner     = "your-name"
+  Owner     = "Bardh Serreqi"
 }
 

@@ -5,7 +5,7 @@
 variable "project_name" {
   description = "Name of the project"
   type        = string
-  default     = "habit-tracker"
+  default     = "apprentice-final"
 }
 
 variable "environment" {

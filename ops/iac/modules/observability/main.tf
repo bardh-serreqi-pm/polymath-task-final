@@ -14,6 +14,8 @@ locals {
   )
 }
 
+data "aws_region" "current" {}
+
 resource "aws_sns_topic" "alerts" {
   name = local.sns_topic_name
   tags = merge(local.common_tags, { Name = local.sns_topic_name })
@@ -25,7 +27,6 @@ resource "aws_cloudwatch_metric_alarm" "api_5xx" {
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   threshold           = 5
-  unit                = "Percent"
 
   metric_query {
     id          = "e1"
@@ -103,7 +104,8 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 12
         height = 6
         properties = {
-          title = "API Gateway 5XX Errors"
+          title  = "API Gateway 5XX Errors"
+          region = data.aws_region.current.name
           metrics = [
             ["AWS/ApiGateway", "5XXError", "ApiId", var.api_gateway_id, "Stage", var.api_gateway_stage_name]
           ]
@@ -118,7 +120,8 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 12
         height = 6
         properties = {
-          title = "API Gateway Latency"
+          title  = "API Gateway Latency"
+          region = data.aws_region.current.name
           metrics = [
             ["AWS/ApiGateway", "Latency", "ApiId", var.api_gateway_id, "Stage", var.api_gateway_stage_name]
           ]

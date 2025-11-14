@@ -98,7 +98,7 @@ resource "aws_secretsmanager_secret_version" "aurora_master" {
 resource "aws_rds_cluster" "aurora" {
   engine                       = "aurora-postgresql"
   engine_mode                  = "provisioned"
-  engine_version               = "15.4"
+  engine_version               = "15.3"
   database_name                = var.db_name
   master_username              = var.db_master_username
   master_password              = random_password.aurora_master.result
