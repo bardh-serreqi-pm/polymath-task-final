@@ -14,6 +14,21 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    // Ensure proper asset paths for production
+    assetsInlineLimit: 4096,
+    // Generate source maps for debugging (optional, can be disabled for smaller builds)
+    sourcemap: false,
+    // Optimize build output
+    rollupOptions: {
+      output: {
+        // Ensure consistent chunk naming
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+      },
+    },
   },
+  // Base path - empty for root deployment
+  base: '/',
 })
 

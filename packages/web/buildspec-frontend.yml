@@ -14,25 +14,46 @@ phases:
           echo "Build started on $(date)"
           echo "Building React application..."
           cd "$CODEBUILD_SRC_DIR/packages/web"
+          # Clean previous build if it exists
+          rm -rf dist
+          # Build the application
           npm run build
+          # Verify build output
+          if [ ! -f "dist/index.html" ]; then
+            echo "ERROR: index.html not found in dist directory"
+            exit 1
+          fi
           echo "Build completed successfully"
+          echo "Build output structure:"
+          find dist -type f | head -20
 
   post_build:
     commands:
       - |
           echo "Syncing static files to S3..."
+          # Ensure we're in the correct directory
           cd "$CODEBUILD_SRC_DIR/packages/web"
           # Verify dist directory exists
           if [ ! -d "dist" ]; then
             echo "ERROR: dist directory not found. Build may have failed."
+            echo "Current directory: $(pwd)"
+            echo "Directory contents:"
+            ls -la
             exit 1
           fi
           # List contents for debugging
           echo "Contents of dist directory:"
           ls -la dist/
-          # Sync only the dist directory contents to S3 root
-          aws s3 sync dist/ s3://${S3_BUCKET}/ --delete --exact-timestamps
+          echo "Syncing dist/ contents to S3 bucket root..."
+          # Use absolute path to ensure we sync from the correct location
+          DIST_PATH="$(pwd)/dist"
+          echo "Source path: $DIST_PATH"
+          # Sync only the dist directory contents to S3 root, using absolute path
+          aws s3 sync "$DIST_PATH/" s3://${S3_BUCKET}/ --delete --exact-timestamps
           echo "Files synced to S3 bucket: ${S3_BUCKET}"
+          # Verify what was synced
+          echo "Verifying S3 bucket contents:"
+          aws s3 ls s3://${S3_BUCKET}/ --recursive | head -20
           
           echo "Invalidating CloudFront cache..."
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
