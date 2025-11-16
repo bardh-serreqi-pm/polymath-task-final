@@ -261,7 +261,8 @@ resource "aws_codepipeline" "backend" {
       version          = "1"
 
       configuration = {
-        ProjectName = aws_codebuild_project.backend.name
+        ProjectName   = aws_codebuild_project.backend.name
+        PrimarySource = "build_output"
         EnvironmentVariables = jsonencode([
           {
             name  = "PIPELINE_PHASE"
@@ -335,7 +336,8 @@ resource "aws_codepipeline" "backend" {
       version          = "1"
 
       configuration = {
-        ProjectName = aws_codebuild_project.backend.name
+        ProjectName   = aws_codebuild_project.backend.name
+        PrimarySource = "build_output"
         EnvironmentVariables = jsonencode([
           {
             name  = "PIPELINE_PHASE"
