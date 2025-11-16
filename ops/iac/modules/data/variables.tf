@@ -60,9 +60,10 @@ variable "aurora_max_capacity" {
 }
 
 variable "django_secret_key" {
-  description = "Django SECRET_KEY for the application."
+  description = "Django SECRET_KEY for the application. If empty, a random key will be generated."
   type        = string
   sensitive   = true
+  default     = ""
 }
 
 variable "django_debug" {

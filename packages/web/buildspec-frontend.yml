@@ -22,7 +22,16 @@ phases:
       - |
           echo "Syncing static files to S3..."
           cd "$CODEBUILD_SRC_DIR/packages/web"
-          aws s3 sync dist/ s3://${S3_BUCKET}/ --delete
+          # Verify dist directory exists
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist directory not found. Build may have failed."
+            exit 1
+          fi
+          # List contents for debugging
+          echo "Contents of dist directory:"
+          ls -la dist/
+          # Sync only the dist directory contents to S3 root
+          aws s3 sync dist/ s3://${S3_BUCKET}/ --delete --exact-timestamps
           echo "Files synced to S3 bucket: ${S3_BUCKET}"
           
           echo "Invalidating CloudFront cache..."

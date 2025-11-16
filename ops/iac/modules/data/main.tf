@@ -1,3 +1,10 @@
+# Generate Django secret key if not provided
+# This must be defined before locals block that references it
+resource "random_password" "django_secret_key" {
+  length  = 50
+  special = true
+}
+
 locals {
   common_tags = merge(
     var.tags,
@@ -14,12 +21,6 @@ locals {
 
   # Generate Django secret key if not provided
   django_secret_key = var.django_secret_key != "" ? var.django_secret_key : random_password.django_secret_key.result
-}
-
-# Generate Django secret key if not provided
-resource "random_password" "django_secret_key" {
-  length  = 50
-  special = true
 }
 
 resource "aws_security_group" "aurora" {

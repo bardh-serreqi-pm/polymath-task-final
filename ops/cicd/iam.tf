@@ -119,8 +119,7 @@ resource "aws_iam_role_policy" "codepipeline_backend_policy" {
           "codebuild:StartBuild"
         ]
         Resource = [
-          aws_codebuild_project.backend.arn,
-          aws_codebuild_project.terraform.arn
+          aws_codebuild_project.backend.arn
         ]
       },
       {
@@ -225,6 +224,15 @@ resource "aws_iam_role_policy" "codebuild_backend_policy" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:UpdateFunctionCode",
+          "lambda:GetFunction",
+          "lambda:WaitFunctionUpdated"
+        ]
+        Resource = "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.project_name}-${var.environment}-api"
       }
     ]
   })

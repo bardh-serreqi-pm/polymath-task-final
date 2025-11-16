@@ -247,25 +247,29 @@ resource "aws_codepipeline" "backend" {
     }
   }
 
-  # Deploy to Staging Stage (Update Lambda via Terraform)
+  # Deploy to Staging Stage (Update Lambda directly)
   stage {
     name = "Deploy-Staging"
 
     action {
-      name            = "Terraform-Apply-Staging"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source_output", "build_output"]
-      version         = "1"
+      name             = "Update-Lambda-Staging"
+      category         = "Build"
+      owner            = "AWS"
+      provider         = "CodeBuild"
+      input_artifacts  = ["source_output", "build_output"]
+      output_artifacts = ["deploy_output"]
+      version          = "1"
 
       configuration = {
-        ProjectName   = aws_codebuild_project.terraform.name
-        PrimarySource = "source_output"
+        ProjectName = aws_codebuild_project.backend.name
         EnvironmentVariables = jsonencode([
           {
-            name  = "TF_ACTION"
-            value = "apply"
+            name  = "PIPELINE_PHASE"
+            value = "deploy"
+          },
+          {
+            name  = "LAMBDA_FUNCTION_NAME"
+            value = "${var.project_name}-${var.environment}-api"
           }
         ])
       }
@@ -317,25 +321,29 @@ resource "aws_codepipeline" "backend" {
     }
   }
 
-  # Deploy to Production Stage (Update Lambda via Terraform)
+  # Deploy to Production Stage (Update Lambda directly)
   stage {
     name = "Deploy-Production"
 
     action {
-      name            = "Terraform-Apply-Production"
-      category        = "Build"
-      owner           = "AWS"
-      provider        = "CodeBuild"
-      input_artifacts = ["source_output", "build_output"]
-      version         = "1"
+      name             = "Update-Lambda-Production"
+      category         = "Build"
+      owner            = "AWS"
+      provider         = "CodeBuild"
+      input_artifacts  = ["source_output", "build_output"]
+      output_artifacts = ["deploy_output"]
+      version          = "1"
 
       configuration = {
-        ProjectName   = aws_codebuild_project.terraform.name
-        PrimarySource = "source_output"
+        ProjectName = aws_codebuild_project.backend.name
         EnvironmentVariables = jsonencode([
           {
-            name  = "TF_ACTION"
-            value = "apply"
+            name  = "PIPELINE_PHASE"
+            value = "deploy"
+          },
+          {
+            name  = "LAMBDA_FUNCTION_NAME"
+            value = "${var.project_name}-${var.environment}-api"
           }
         ])
       }
