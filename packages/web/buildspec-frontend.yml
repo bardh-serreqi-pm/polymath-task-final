@@ -101,5 +101,6 @@ phases:
           echo "CloudFront invalidation created: $INVALIDATION_ID"
 
 artifacts:
+  base-directory: packages/web
   files:
     - 'dist/**/*'

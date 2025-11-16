@@ -115,10 +115,36 @@ if os.environ.get('DB_HOST'):
     # Use reader endpoint for read replicas if available (optional)
     if os.environ.get('DB_READER_HOST'):
         DATABASES['default']['HOST'] = os.environ.get('DB_READER_HOST')
+elif os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+    # Running in Lambda but DB_HOST not set - use a dummy database config
+    # This allows Django to start even if database isn't configured yet
+    # The actual database connection will fail, but Django won't crash on startup
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'habittracker'),
+            'USER': os.environ.get('DB_USER', 'dbadmin'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'OPTIONS': {
+                'connect_timeout': 10,
+            },
+        }
+    }
 elif os.path.exists('local_settings.py'):
     from local_settings import DATABASES
 else:
-    from .local_settings import DATABASES
+    try:
+        from .local_settings import DATABASES
+    except ImportError:
+        # Fallback if local_settings doesn't exist
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
