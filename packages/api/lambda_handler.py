@@ -1,6 +1,6 @@
 """
 AWS Lambda handler for Django application.
-Uses Mangum to adapt Django WSGI to Lambda's ASGI interface.
+Uses Mangum to adapt Django ASGI application to Lambda's HTTP API v2 interface.
 """
 import os
 import sys
@@ -19,26 +19,40 @@ except Exception as e:
     print("Falling back to environment variables only.")
     traceback.print_exc()
 
-# Set Django settings module BEFORE importing WSGI
-# The wsgi.py module will also set this, but we set it here to ensure it's set before Django initializes
+# Set Django settings module BEFORE importing ASGI/WSGI
+# The asgi.py/wsgi.py module will also set this, but we set it here to ensure it's set before Django initializes
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Habit_Tracker.settings')
 
-# Import WSGI application - this will trigger Django setup via get_wsgi_application()
-# We don't call django.setup() here because wsgi.py will handle it
+# Import ASGI application - Mangum works better with ASGI
+# This will trigger Django setup via get_asgi_application()
 try:
-    from Habit_Tracker.wsgi import application
-    print("Django WSGI application loaded successfully")
+    from Habit_Tracker.asgi import application
+    print("Django ASGI application loaded successfully")
 except Exception as e:
-    print(f"ERROR: Failed to load Django WSGI application: {e}")
+    print(f"ERROR: Failed to load Django ASGI application: {e}")
     traceback.print_exc()
-    # Create a dummy application that returns 500 error
-    def error_application(environ, start_response):
-        start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
-        return [b'Django application failed to initialize']
-    application = error_application
+    # Fallback to WSGI if ASGI fails
+    try:
+        from Habit_Tracker.wsgi import application
+        print("Fell back to WSGI application")
+    except Exception as e2:
+        print(f"ERROR: Failed to load Django WSGI application: {e2}")
+        traceback.print_exc()
+        # Create a dummy application that returns 500 error
+        async def error_application(scope, receive, send):
+            await send({
+                'type': 'http.response.start',
+                'status': 500,
+                'headers': [[b'content-type', b'text/plain']],
+            })
+            await send({
+                'type': 'http.response.body',
+                'body': b'Django application failed to initialize',
+            })
+        application = error_application
 
 # Run migrations on cold start (only if needed, can be optimized)
-# This happens after Django is set up by the WSGI import
+# This happens after Django is set up by the ASGI/WSGI import
 try:
     from django.core.management import execute_from_command_line
     # Only run migrations if DB_MIGRATE_ON_START is set
@@ -51,8 +65,8 @@ except Exception as e:
 try:
     from mangum import Mangum
     # Create the Lambda handler at module level
-    # Mangum automatically detects WSGI applications and wraps them correctly
-    # lifespan="off" disables ASGI lifespan events (not needed for WSGI)
+    # Mangum works with ASGI applications (Django ASGI is preferred for Lambda)
+    # lifespan="off" disables ASGI lifespan events (not needed for basic HTTP)
     handler = Mangum(application, lifespan="off")
     print("Mangum handler created successfully")
 except Exception as e:
