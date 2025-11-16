@@ -257,7 +257,7 @@ resource "aws_codepipeline" "backend" {
       owner            = "AWS"
       provider         = "CodeBuild"
       input_artifacts  = ["source_output", "build_output"]
-      output_artifacts = ["deploy_output"]
+      output_artifacts = ["deploy_staging_output"]
       version          = "1"
 
       configuration = {
@@ -331,7 +331,7 @@ resource "aws_codepipeline" "backend" {
       owner            = "AWS"
       provider         = "CodeBuild"
       input_artifacts  = ["source_output", "build_output"]
-      output_artifacts = ["deploy_output"]
+      output_artifacts = ["deploy_production_output"]
       version          = "1"
 
       configuration = {
