@@ -33,7 +33,9 @@ phases:
           echo "Syncing static files to S3..."
           # Ensure we're in the correct directory
           cd "$CODEBUILD_SRC_DIR/packages/web"
-          # Verify dist directory exists
+          echo "Current working directory: $(pwd)"
+          
+          # Verify dist directory exists and was built
           if [ ! -d "dist" ]; then
             echo "ERROR: dist directory not found. Build may have failed."
             echo "Current directory: $(pwd)"
@@ -41,19 +43,54 @@ phases:
             ls -la
             exit 1
           fi
+          
+          # Verify index.html exists in dist
+          if [ ! -f "dist/index.html" ]; then
+            echo "ERROR: dist/index.html not found. Build may have failed."
+            exit 1
+          fi
+          
           # List contents for debugging
           echo "Contents of dist directory:"
           ls -la dist/
-          echo "Syncing dist/ contents to S3 bucket root..."
+          echo "Number of files in dist:"
+          find dist -type f | wc -l
+          echo "Sample files in dist:"
+          find dist -type f | head -10
+          
           # Use absolute path to ensure we sync from the correct location
           DIST_PATH="$(pwd)/dist"
           echo "Source path: $DIST_PATH"
-          # Sync only the dist directory contents to S3 root, using absolute path
+          echo "Target S3 bucket: ${S3_BUCKET}"
+          
+          # Final verification - ensure we're about to sync from dist, not the repo root
+          if [ ! -f "$DIST_PATH/index.html" ]; then
+            echo "ERROR: $DIST_PATH/index.html not found. Cannot proceed with sync."
+            exit 1
+          fi
+          
+          # Verify we're in the web directory (safety check)
+          if [ ! -f "package.json" ] || [ ! -f "vite.config.js" ]; then
+            echo "ERROR: Not in packages/web directory. Current directory: $(pwd)"
+            exit 1
+          fi
+          
+          # Sync ONLY the dist directory contents to S3 root
+          # Since DIST_PATH is already the dist directory, syncing "$DIST_PATH/" 
+          # will sync only the contents of dist/ to the S3 bucket root
+          echo "Starting S3 sync from $DIST_PATH/ to s3://${S3_BUCKET}/"
+          echo "This should only sync files from the dist/ directory"
           aws s3 sync "$DIST_PATH/" s3://${S3_BUCKET}/ --delete --exact-timestamps
+          
           echo "Files synced to S3 bucket: ${S3_BUCKET}"
-          # Verify what was synced
-          echo "Verifying S3 bucket contents:"
-          aws s3 ls s3://${S3_BUCKET}/ --recursive | head -20
+          
+          # Verify what was synced to S3
+          echo "Verifying S3 bucket contents (first 30 files):"
+          aws s3 ls s3://${S3_BUCKET}/ --recursive | head -30
+          
+          # Count files in S3
+          echo "Total files in S3 bucket:"
+          aws s3 ls s3://${S3_BUCKET}/ --recursive | wc -l
           
           echo "Invalidating CloudFront cache..."
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
@@ -65,4 +102,4 @@ phases:
 
 artifacts:
   files:
-    - '**/*'
+    - 'dist/**/*'

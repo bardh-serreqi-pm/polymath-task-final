@@ -461,26 +461,10 @@ resource "aws_codepipeline" "frontend" {
     }
   }
 
-  # Deploy to Staging Stage
-  stage {
-    name = "Deploy-Staging"
+  # Note: Deployment to S3 is handled in the buildspec post_build phase
+  # The buildspec syncs dist/ contents directly to S3, so no separate deploy stage is needed
 
-    action {
-      name            = "Deploy-Staging"
-      category        = "Deploy"
-      owner           = "AWS"
-      provider        = "S3"
-      input_artifacts = ["build_output"]
-      version         = "1"
-
-      configuration = {
-        BucketName = local.frontend_bucket_name
-        Extract    = "true"
-      }
-    }
-  }
-
-  # Approval Stage
+  # Approval Stage (optional - can be removed if not needed)
   stage {
     name = "Approval"
 
@@ -493,25 +477,6 @@ resource "aws_codepipeline" "frontend" {
 
       configuration = {
         CustomData = "Please review the staging deployment and approve for production."
-      }
-    }
-  }
-
-  # Deploy to Production Stage
-  stage {
-    name = "Deploy-Production"
-
-    action {
-      name            = "Deploy-Production"
-      category        = "Deploy"
-      owner           = "AWS"
-      provider        = "S3"
-      input_artifacts = ["build_output"]
-      version         = "1"
-
-      configuration = {
-        BucketName = local.frontend_bucket_name
-        Extract    = "true"
       }
     }
   }
