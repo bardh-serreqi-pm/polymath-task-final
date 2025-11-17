@@ -39,14 +39,8 @@ variable "api_gateway_stage_name" {
   type        = string
 }
 
-variable "route53_zone_id" {
-  description = "Route53 hosted zone ID for custom domain (optional)."
-  type        = string
-  default     = ""
-}
-
 variable "frontend_domain_name" {
-  description = "Custom domain name for the frontend (optional)."
+  description = "Custom domain name for the frontend (e.g., app.example.com). If provided, the Route53 hosted zone will be looked up automatically."
   type        = string
   default     = ""
 }

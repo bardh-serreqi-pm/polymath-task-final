@@ -47,10 +47,6 @@ resource "aws_codebuild_project" "terraform" {
       value = local.lambda_image_default_uri
     }
     environment_variable {
-      name  = "TF_VAR_route53_zone_id"
-      value = var.route53_zone_id
-    }
-    environment_variable {
       name  = "TF_VAR_frontend_domain_name"
       value = var.frontend_domain_name
     }

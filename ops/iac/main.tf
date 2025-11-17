@@ -61,7 +61,6 @@ module "edge" {
   frontend_bucket_regional_domain_name = module.data.frontend_bucket_regional_domain_name
   api_gateway_domain                   = module.compute.api_gateway_domain
   api_gateway_stage_name               = module.compute.api_gateway_stage_name
-  route53_zone_id                      = var.route53_zone_id
   frontend_domain_name                 = var.frontend_domain_name
 }
 

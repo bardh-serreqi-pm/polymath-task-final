@@ -25,7 +25,7 @@ terraform_state_bucket     = "your-terraform-state-bucket-name"
 terraform_state_lock_table = "your-terraform-state-lock-table-name"
 
 # Route53 Custom Domain Configuration (optional)
-route53_zone_id      = ""  # Example: "Z0025989W9J32N8Q1R0"
+# The Route53 hosted zone will be looked up automatically by domain name
 frontend_domain_name = ""  # Example: "app.example.com"
 
 # Tags

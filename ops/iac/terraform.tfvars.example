@@ -43,7 +43,9 @@ lambda_environment = {
 # ============================================================================
 # Frontend bucket name - will be auto-generated if not specified
 # frontend_bucket_name = "apprentice-final-staging-frontend"
-route53_zone_id      = "Z0025989W9J32N8Q1R0"
+
+# Custom domain configuration (optional)
+# If provided, the Route53 hosted zone will be looked up automatically by domain name
 frontend_domain_name = "bardhi.devops.konitron.com"
 
 # ============================================================================

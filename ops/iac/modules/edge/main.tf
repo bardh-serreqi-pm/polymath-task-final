@@ -10,7 +10,7 @@ terraform {
 locals {
   bucket_name = var.frontend_bucket_name
 
-  custom_domain_enabled = var.frontend_domain_name != "" && var.route53_zone_id != ""
+  custom_domain_enabled = var.frontend_domain_name != ""
 
   common_tags = merge(
     var.tags,
@@ -22,6 +22,13 @@ locals {
       Module      = "edge"
     }
   )
+}
+
+# Look up the Route53 hosted zone by domain name if custom domain is enabled
+data "aws_route53_zone" "this" {
+  count        = local.custom_domain_enabled ? 1 : 0
+  name         = var.frontend_domain_name
+  private_zone = false
 }
 
 # Data sources for CloudFront managed cache policies
@@ -75,7 +82,7 @@ resource "aws_route53_record" "frontend_certificate_validation" {
 
   name            = each.value.name
   type            = each.value.type
-  zone_id         = var.route53_zone_id
+  zone_id         = data.aws_route53_zone.this[0].zone_id
   ttl             = 60
   records         = [each.value.value]
   allow_overwrite = true
@@ -456,7 +463,7 @@ resource "aws_s3_bucket_policy" "frontend" {
 
 resource "aws_route53_record" "frontend_alias" {
   count   = local.custom_domain_enabled ? 1 : 0
-  zone_id = var.route53_zone_id
+  zone_id = data.aws_route53_zone.this[0].zone_id
   name    = var.frontend_domain_name
   type    = "A"
 

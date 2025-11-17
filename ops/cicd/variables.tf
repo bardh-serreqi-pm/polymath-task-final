@@ -79,12 +79,6 @@ variable "terraform_state_lock_table" {
   type        = string
 }
 
-variable "route53_zone_id" {
-  description = "Route53 hosted zone ID for custom domain (optional)"
-  type        = string
-  default     = ""
-}
-
 variable "frontend_domain_name" {
   description = "Custom domain name for the frontend CloudFront distribution (e.g., app.example.com). Leave empty to use the CloudFront URL."
   type        = string
