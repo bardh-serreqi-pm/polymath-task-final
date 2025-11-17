@@ -217,6 +217,12 @@ resource "aws_apigatewayv2_route" "options_root" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+resource "aws_apigatewayv2_route" "default" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 resource "aws_apigatewayv2_route" "root" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "ANY /"
