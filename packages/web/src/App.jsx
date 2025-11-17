@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
@@ -44,7 +44,7 @@ function App() {
   }
 
   return (
-    <HashRouter>
+    <Router>
       <div className="App">
         {isAuthenticated && <Navbar onLogout={() => setIsAuthenticated(false)} />}
         <Routes>
@@ -104,7 +104,7 @@ function App() {
           />
         </Routes>
       </div>
-    </HashRouter>
+    </Router>
   )
 }
 
