@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
@@ -44,67 +44,67 @@ function App() {
   }
 
   return (
-    <Router>
+    <HashRouter>
       <div className="App">
         {isAuthenticated && <Navbar onLogout={() => setIsAuthenticated(false)} />}
         <Routes>
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
               isAuthenticated ? <Navigate to="/" /> : <Login onLogin={() => setIsAuthenticated(true)} />
-            } 
+            }
           />
-          <Route 
-            path="/register" 
+          <Route
+            path="/register"
             element={
               isAuthenticated ? <Navigate to="/" /> : <Register onRegister={() => setIsAuthenticated(true)} />
-            } 
+            }
           />
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               isAuthenticated ? <Home /> : <Navigate to="/login" />
-            } 
+            }
           />
-          <Route 
-            path="/habit-manager" 
+          <Route
+            path="/habit-manager"
             element={
               isAuthenticated ? <HabitManager /> : <Navigate to="/login" />
-            } 
+            }
           />
-          <Route 
-            path="/add-habit" 
+          <Route
+            path="/add-habit"
             element={
               isAuthenticated ? <AddHabit /> : <Navigate to="/login" />
-            } 
+            }
           />
-          <Route 
-            path="/habit-details/:id" 
+          <Route
+            path="/habit-details/:id"
             element={
               isAuthenticated ? <HabitDetails /> : <Navigate to="/login" />
-            } 
+            }
           />
-          <Route 
-            path="/delete-habit/:id" 
+          <Route
+            path="/delete-habit/:id"
             element={
               isAuthenticated ? <DeleteHabit /> : <Navigate to="/login" />
-            } 
+            }
           />
-          <Route 
-            path="/analysis" 
+          <Route
+            path="/analysis"
             element={
               isAuthenticated ? <HabitAnalysis /> : <Navigate to="/login" />
-            } 
+            }
           />
-          <Route 
-            path="/profile" 
+          <Route
+            path="/profile"
             element={
               isAuthenticated ? <Profile /> : <Navigate to="/login" />
-            } 
+            }
           />
         </Routes>
       </div>
-    </Router>
+    </HashRouter>
   )
 }
 
