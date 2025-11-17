@@ -304,6 +304,12 @@ resource "aws_apigatewayv2_route" "login" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+resource "aws_apigatewayv2_route" "login_proxy" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Login/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 resource "aws_apigatewayv2_route" "register" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "ANY /Register/{proxy+}"
@@ -319,6 +325,12 @@ resource "aws_apigatewayv2_route" "register_root" {
 resource "aws_apigatewayv2_route" "logout" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "ANY /Logout"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "logout_proxy" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Logout/{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
