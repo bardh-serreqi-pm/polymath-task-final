@@ -38,4 +38,14 @@ output "api_gateway_stage_name" {
   value       = aws_apigatewayv2_stage.api.name
 }
 
+output "lambda_log_group_name" {
+  description = "CloudWatch log group name for Lambda function."
+  value       = aws_cloudwatch_log_group.lambda.name
+}
+
+output "api_gateway_log_group_name" {
+  description = "CloudWatch log group name for API Gateway execution logs."
+  value       = aws_cloudwatch_log_group.api_execution.name
+}
+
 

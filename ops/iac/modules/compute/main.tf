@@ -136,8 +136,8 @@ resource "aws_lambda_function" "api" {
   package_type  = "Image"
   image_uri     = var.lambda_image_uri
   role          = aws_iam_role.lambda.arn
-  timeout       = 30
-  memory_size   = 512
+  timeout       = 60   # Increased timeout for VPC cold starts and Django initialization
+  memory_size   = 1024 # Increased memory for faster execution
   publish       = true
 
   vpc_config {
@@ -198,7 +198,7 @@ resource "aws_apigatewayv2_integration" "lambda" {
   integration_uri        = aws_lambda_function.api.invoke_arn
   payload_format_version = "2.0"
   integration_method     = "POST"
-  timeout_milliseconds   = 29000
+  timeout_milliseconds   = 30000 # Max for API Gateway (30 seconds)
 }
 
 # Explicit routes for better control and monitoring
@@ -403,12 +403,28 @@ resource "aws_apigatewayv2_stage" "api" {
 
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_execution.arn
-    format          = jsonencode({ requestId = "$context.requestId", status = "$context.status", path = "$context.path" })
+    format = jsonencode({
+      requestId        = "$context.requestId"
+      ip               = "$context.identity.sourceIp"
+      requestTime      = "$context.requestTime"
+      httpMethod       = "$context.httpMethod"
+      routeKey         = "$context.routeKey"
+      status           = "$context.status"
+      protocol         = "$context.protocol"
+      responseLength   = "$context.responseLength"
+      integrationError = "$context.integrationErrorMessage"
+      error = {
+        message       = "$context.error.message"
+        messageString = "$context.error.messageString"
+      }
+    })
   }
 
   default_route_settings {
-    throttling_burst_limit = 500
-    throttling_rate_limit  = 1000
+    detailed_metrics_enabled = true
+    logging_level            = "INFO"
+    throttling_burst_limit   = 500
+    throttling_rate_limit    = 1000
   }
 
   tags = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-http-stage" })
@@ -418,6 +434,36 @@ resource "aws_cloudwatch_log_group" "api_execution" {
   name              = "/aws/apigateway/${aws_apigatewayv2_api.api.id}"
   retention_in_days = var.log_retention_in_days
   tags              = local.common_tags
+}
+
+# IAM role for API Gateway to write logs to CloudWatch
+resource "aws_iam_role" "api_gateway_cloudwatch" {
+  name = "${var.project_name}-${var.environment}-apigw-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-apigw-cloudwatch-role" })
+}
+
+resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
+  role       = aws_iam_role.api_gateway_cloudwatch.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
+
+# API Gateway account settings (region-level, applies to all APIs in the region)
+resource "aws_api_gateway_account" "main" {
+  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
 }
 
 
