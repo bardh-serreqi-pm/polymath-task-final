@@ -1,39 +1,57 @@
-# Example Terraform variables file for IAC module
-# Copy this file to terraform.tfvars and fill in your values
+# ============================================================================
+# IAC Infrastructure Configuration
+# ============================================================================
 
 project_name = "apprentice-final"
 environment  = "staging"
 
+# ============================================================================
 # AWS Configuration
+# ============================================================================
 aws_region = "us-east-1"
 
-# Network configuration
-vpc_cidr            = "10.20.0.0/16"
-public_subnet_cidrs = ["10.20.0.0/24", "10.20.1.0/24"]
+# ============================================================================
+# Network Configuration
+# ============================================================================
+vpc_cidr             = "10.20.0.0/16"
+public_subnet_cidrs  = ["10.20.0.0/24", "10.20.1.0/24"]
 private_subnet_cidrs = ["10.20.16.0/24", "10.20.17.0/24"]
 
-# Data layer configuration
-# db_name            = "habittracker"
-# db_master_username = "dbadmin"
-# aurora_min_capacity = 0.5
-# aurora_max_capacity = 4
+# ============================================================================
+# Data Layer Configuration
+# ============================================================================
+db_name             = "habittracker"
+db_master_username  = "dbadmin"
+aurora_min_capacity = 0.5
+aurora_max_capacity = 4
 
-# Compute configuration
-# Set by CI/CD with the built Lambda image URI
-lambda_image_uri = "123456789012.dkr.ecr.us-east-1.amazonaws.com/apprentice-final-staging-api:latest"
+# ============================================================================
+# Compute Configuration
+# ============================================================================
+# Lambda image URI - This will be set by the CI/CD pipeline from the backend build
+# For initial deployment, use the default URI or a placeholder
+# Format: <account-id>.dkr.ecr.<region>.amazonaws.com/<repository-name>:<tag>
+lambda_image_uri = "967746377724.dkr.ecr.us-east-1.amazonaws.com/apprentice-final-staging-api:latest"
 
 lambda_environment = {
   DJANGO_SETTINGS_MODULE = "Habit_Tracker.settings"
   DEBUG                  = "false"
 }
 
-# Edge configuration
+# ============================================================================
+# Edge Configuration
+# ============================================================================
+# Frontend bucket name - will be auto-generated if not specified
 # frontend_bucket_name = "apprentice-final-staging-frontend"
+route53_zone_id      = "Z0025989W9J32N8Q1R0"
+frontend_domain_name = "bardhi.devops.konitron.com"
 
+# ============================================================================
 # Tags
+# ============================================================================
 tags = {
-  Project   = "ApprenticeFinal"
-  ManagedBy = "Terraform"
-  Owner     = "Bardh Serreqi"
+  Project     = "ApprenticeFinal"
+  Environment = "staging"
+  Owner       = "Bardh Serreqi"
 }
 

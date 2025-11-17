@@ -31,6 +31,18 @@ phases:
             echo "Error: Neither lambda-image.json nor DEFAULT_LAMBDA_IMAGE_URI is available."
             exit 1
           fi
+      - |
+          echo "Creating terraform.tfvars from example file..."
+          cd "$CODEBUILD_SRC_DIR/ops/iac"
+          if [ ! -f "terraform.tfvars.example" ]; then
+            echo "ERROR: terraform.tfvars.example not found"
+            exit 1
+          fi
+          cp terraform.tfvars.example terraform.tfvars
+          # Update lambda_image_uri with the actual value from the build
+          sed -i "s|lambda_image_uri = \".*\"|lambda_image_uri = \"$TF_VAR_lambda_image_uri\"|g" terraform.tfvars
+          echo "terraform.tfvars created successfully from example file"
+          echo "Updated lambda_image_uri to: $TF_VAR_lambda_image_uri"
 
   build:
     commands:
@@ -42,7 +54,7 @@ phases:
           echo "Running Terraform ${TF_ACTION}..."
           cd "$CODEBUILD_SRC_DIR/ops/iac"
           if [ "$TF_ACTION" = "plan" ]; then
-            terraform plan -out=tfplan
+            terraform plan -var-file=terraform.tfvars -out=tfplan
             cp tfplan "$CODEBUILD_SRC_DIR/tfplan"
             echo "Plan file created: tfplan"
           elif [ "$TF_ACTION" = "apply" ]; then
