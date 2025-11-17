@@ -1,6 +1,8 @@
 locals {
   bucket_name = var.frontend_bucket_name
 
+  custom_domain_enabled = var.frontend_domain_name != "" && var.route53_zone_id != ""
+
   common_tags = merge(
     var.tags,
     {
@@ -32,6 +34,53 @@ data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
 
 data "aws_cloudfront_response_headers_policy" "simple_cors" {
   name = "Managed-SimpleCORS"
+}
+
+# ---------------------------------------------------------------------------
+# Optional custom domain configuration (ACM + Route53)
+# ---------------------------------------------------------------------------
+
+resource "aws_acm_certificate" "frontend" {
+  count    = local.custom_domain_enabled ? 1 : 0
+  provider = aws.us_east_1
+
+  domain_name       = var.frontend_domain_name
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_route53_record" "frontend_certificate_validation" {
+  for_each = local.custom_domain_enabled ? {
+    for dvo in aws_acm_certificate.frontend[0].domain_validation_options :
+    dvo.domain_name => {
+      name  = dvo.resource_record_name
+      type  = dvo.resource_record_type
+      value = dvo.resource_record_value
+    }
+  } : {}
+
+  name            = each.value.name
+  type            = each.value.type
+  zone_id         = var.route53_zone_id
+  ttl             = 60
+  records         = [each.value.value]
+  allow_overwrite = true
+}
+
+resource "aws_acm_certificate_validation" "frontend" {
+  count    = local.custom_domain_enabled ? 1 : 0
+  provider = aws.us_east_1
+
+  certificate_arn = aws_acm_certificate.frontend[0].arn
+  validation_record_fqdns = [
+    for record in aws_route53_record.frontend_certificate_validation :
+    record.fqdn
+  ]
 }
 
 # Custom response headers policy for CORS with credentials
@@ -146,6 +195,7 @@ resource "aws_cloudfront_distribution" "this" {
   comment             = "${var.project_name}-${var.environment} distribution"
   price_class         = "PriceClass_100"
   default_root_object = "index.html"
+  aliases             = local.custom_domain_enabled ? [var.frontend_domain_name] : []
 
   origin {
     domain_name              = var.frontend_bucket_regional_domain_name
@@ -344,7 +394,10 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = local.custom_domain_enabled ? false : true
+    acm_certificate_arn            = local.custom_domain_enabled ? aws_acm_certificate_validation.frontend[0].certificate_arn : null
+    ssl_support_method             = local.custom_domain_enabled ? "sni-only" : null
+    minimum_protocol_version       = local.custom_domain_enabled ? "TLSv1.2_2021" : null
   }
 
   web_acl_id = aws_wafv2_web_acl.this.arn
@@ -390,6 +443,19 @@ resource "aws_s3_bucket_policy" "frontend" {
       }
     ]
   })
+}
+
+resource "aws_route53_record" "frontend_alias" {
+  count   = local.custom_domain_enabled ? 1 : 0
+  zone_id = var.route53_zone_id
+  name    = var.frontend_domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.this.domain_name
+    zone_id                = aws_cloudfront_distribution.this.hosted_zone_id
+    evaluate_target_health = false
+  }
 }
 
 

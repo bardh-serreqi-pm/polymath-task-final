@@ -71,6 +71,11 @@ output "cloudfront_distribution_id" {
   value       = module.edge.cloudfront_distribution_id
 }
 
+output "frontend_domain_name" {
+  description = "Primary domain serving the frontend."
+  value       = module.edge.frontend_domain_name
+}
+
 # ---------------------------- Observability --------------------------------
 output "alerts_sns_topic_arn" {
   description = "SNS topic ARN for alert notifications."

@@ -13,6 +13,11 @@ output "cloudfront_distribution_id" {
   value       = aws_cloudfront_distribution.this.id
 }
 
+output "frontend_domain_name" {
+  description = "Primary domain serving the frontend (custom domain if configured, otherwise the CloudFront domain)."
+  value       = local.custom_domain_enabled ? var.frontend_domain_name : aws_cloudfront_distribution.this.domain_name
+}
+
 output "waf_web_acl_arn" {
   description = "ARN of the WAF web ACL associated with CloudFront."
   value       = aws_wafv2_web_acl.this.arn

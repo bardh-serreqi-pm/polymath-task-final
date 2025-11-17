@@ -36,6 +36,22 @@ provider "aws" {
   }
 }
 
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = merge(
+      var.tags,
+      {
+        Environment = "staging"
+        Project     = "ApprenticeFinal"
+        Owner       = "Bardh Serreqi"
+      }
+    )
+  }
+}
+
 # ============================================================================
 # DATA SOURCES
 # ============================================================================
