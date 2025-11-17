@@ -474,4 +474,28 @@ resource "aws_route53_record" "frontend_alias" {
   }
 }
 
+# ============================================================================
+# SSM Parameters for CI/CD Pipelines
+# ============================================================================
+
+resource "aws_ssm_parameter" "cloudfront_distribution_id" {
+  name        = "/${var.project_name}/${var.environment}/cloudfront/distribution_id"
+  description = "CloudFront distribution ID for ${var.environment}"
+  type        = "String"
+  value       = aws_cloudfront_distribution.this.id
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
+resource "aws_ssm_parameter" "cloudfront_domain_name" {
+  name        = "/${var.project_name}/${var.environment}/cloudfront/domain_name"
+  description = "CloudFront domain name for ${var.environment}"
+  type        = "String"
+  value       = aws_cloudfront_distribution.this.domain_name
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
 

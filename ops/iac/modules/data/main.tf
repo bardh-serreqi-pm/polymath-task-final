@@ -238,6 +238,17 @@ resource "aws_s3_bucket" "frontend" {
   tags = merge(local.common_tags, { Name = local.frontend_bucket_name })
 }
 
+# SSM parameter for frontend bucket name (for CI/CD)
+resource "aws_ssm_parameter" "frontend_bucket_name" {
+  name        = "/${var.project_name}/${var.environment}/s3/frontend_bucket_name"
+  description = "Frontend S3 bucket name for ${var.environment}"
+  type        = "String"
+  value       = aws_s3_bucket.frontend.bucket
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
 resource "aws_s3_bucket_versioning" "frontend" {
   bucket = aws_s3_bucket.frontend.id
 

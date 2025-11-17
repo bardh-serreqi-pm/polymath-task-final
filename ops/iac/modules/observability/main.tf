@@ -21,6 +21,17 @@ resource "aws_sns_topic" "alerts" {
   tags = merge(local.common_tags, { Name = local.sns_topic_name })
 }
 
+# SSM parameter for SNS topic ARN (for CI/CD notifications)
+resource "aws_ssm_parameter" "alerts_sns_topic_arn" {
+  name        = "/${var.project_name}/${var.environment}/sns/alerts_topic_arn"
+  description = "SNS topic ARN for alerts in ${var.environment}"
+  type        = "String"
+  value       = aws_sns_topic.alerts.arn
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
 resource "aws_cloudwatch_metric_alarm" "api_5xx" {
   alarm_name          = "${var.project_name}-${var.environment}-api-5xx"
   alarm_description   = "Alert when API Gateway 5XX errors exceed 5% over 5 minutes"

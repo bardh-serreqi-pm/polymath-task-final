@@ -466,4 +466,38 @@ resource "aws_api_gateway_account" "main" {
   cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
 }
 
+# ============================================================================
+# SSM Parameters for CI/CD Pipelines
+# ============================================================================
+
+resource "aws_ssm_parameter" "api_gateway_url" {
+  name        = "/${var.project_name}/${var.environment}/api_gateway/url"
+  description = "API Gateway invoke URL for ${var.environment}"
+  type        = "String"
+  value       = aws_apigatewayv2_stage.api.invoke_url
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
+resource "aws_ssm_parameter" "lambda_function_name" {
+  name        = "/${var.project_name}/${var.environment}/lambda/function_name"
+  description = "Lambda function name for ${var.environment}"
+  type        = "String"
+  value       = aws_lambda_function.api.function_name
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
+resource "aws_ssm_parameter" "ecr_repository_url" {
+  name        = "/${var.project_name}/${var.environment}/ecr/repository_url"
+  description = "ECR repository URL for ${var.environment}"
+  type        = "String"
+  value       = aws_ecr_repository.api.repository_url
+  overwrite   = true
+
+  tags = local.common_tags
+}
+
 

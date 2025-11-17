@@ -179,16 +179,16 @@ resource "aws_codebuild_project" "backend" {
       value = data.aws_caller_identity.current.account_id
     }
     environment_variable {
-      name  = "ECR_REPOSITORY"
-      value = local.api_ecr_repository_url
+      name  = "PROJECT_NAME"
+      value = var.project_name
     }
     environment_variable {
       name  = "ENVIRONMENT"
       value = var.environment
     }
     environment_variable {
-      name  = "API_URL"
-      value = var.api_gateway_url
+      name  = "ECR_REPOSITORY"
+      value = local.api_ecr_repository_url
     }
   }
 
@@ -307,10 +307,6 @@ resource "aws_codepipeline" "backend" {
           {
             name  = "PIPELINE_PHASE"
             value = "health"
-          },
-          {
-            name  = "API_URL"
-            value = local.api_gateway_url
           }
         ])
       }

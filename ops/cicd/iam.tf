@@ -228,6 +228,15 @@ resource "aws_iam_role_policy" "codebuild_backend_policy" {
       {
         Effect = "Allow"
         Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "lambda:UpdateFunctionCode",
           "lambda:GetFunction",
           "lambda:WaitFunctionUpdated"
@@ -374,6 +383,15 @@ resource "aws_iam_role_policy" "codebuild_frontend_policy" {
           "cloudfront:CreateInvalidation"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/*"
       }
     ]
   })

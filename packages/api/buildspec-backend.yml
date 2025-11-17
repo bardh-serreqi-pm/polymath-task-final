@@ -6,6 +6,24 @@ phases:
       - |
           PIPELINE_PHASE="${PIPELINE_PHASE:-build}"
           echo "Pipeline phase: $PIPELINE_PHASE"
+          
+          # Read API Gateway URL from SSM Parameter Store
+          echo "Reading API Gateway URL from SSM Parameter Store..."
+          SSM_PARAM_NAME="/${PROJECT_NAME}/${ENVIRONMENT}/api_gateway/url"
+          API_URL_FROM_SSM=$(aws ssm get-parameter \
+            --name "$SSM_PARAM_NAME" \
+            --region "$AWS_DEFAULT_REGION" \
+            --query 'Parameter.Value' \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$API_URL_FROM_SSM" ]; then
+            export API_URL="$API_URL_FROM_SSM"
+            echo "API_URL retrieved from SSM: $API_URL"
+          else
+            echo "WARNING: Could not retrieve API_URL from SSM parameter: $SSM_PARAM_NAME"
+            echo "Falling back to environment variable if available."
+          fi
+          
           if [ "$PIPELINE_PHASE" = "build" ] || [ "$PIPELINE_PHASE" = "deploy" ]; then
             echo "Logging in to Amazon ECR..."
             aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"

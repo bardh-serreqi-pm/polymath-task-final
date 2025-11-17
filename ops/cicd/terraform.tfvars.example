@@ -1,37 +1,51 @@
-# Example Terraform variables file for CI/CD pipeline
-# Copy this file to terraform.tfvars and fill in your values
+# ============================================================================
+# CI/CD Pipeline Configuration
+# ============================================================================
 
 project_name = "apprentice-final"
 environment  = "staging"
 
+# ============================================================================
 # GitHub Configuration
+# ============================================================================
 github_owner  = "bardh-serreqi-pm"
 github_repo   = "polymath-task-final"
 github_branch = "main"
 
+# ============================================================================
 # AWS Configuration
+# ============================================================================
 aws_region = "us-east-1"
 
-# Artifact Locations (populate from IAC module outputs)
-api_ecr_repository_url     = "123456789012.dkr.ecr.us-east-1.amazonaws.com/apprentice-final-staging-api"
-frontend_bucket_name       = "apprentice-final-staging-frontend"
-cloudfront_distribution_id = "EXAMPLE123456"
-api_gateway_url            = "https://abc123.execute-api.us-east-1.amazonaws.com/staging"
-alerts_sns_topic_arn       = "arn:aws:sns:us-east-1:123456789012:apprentice-final-staging-alerts"
-lambda_image_default_uri   = "123456789012.dkr.ecr.us-east-1.amazonaws.com/apprentice-final-staging-api:latest"
+# ============================================================================
+# Artifact Locations (auto-populated from IAC module's remote state)
+# Leave empty to automatically read from IAC module outputs
+# ============================================================================
+api_ecr_repository_url     = ""
+frontend_bucket_name       = ""
+cloudfront_distribution_id = ""
+api_gateway_url            = ""
+alerts_sns_topic_arn       = ""
+lambda_image_default_uri   = ""
 
+# ============================================================================
 # Terraform State Configuration
-terraform_state_bucket     = "your-terraform-state-bucket-name"
-terraform_state_lock_table = "your-terraform-state-lock-table-name"
+# Must match the backend configuration in providers.tf
+# ============================================================================
+terraform_state_bucket     = "bardhi-apprentice-final-state"
+terraform_state_lock_table = "apprentice-final-terraform-state-lock"
 
-# Route53 Custom Domain Configuration (optional)
-# The Route53 hosted zone will be looked up automatically by domain name
-frontend_domain_name = ""  # Example: "app.example.com"
+# ============================================================================
+# Route53 Custom Domain Configuration
+# ============================================================================
+frontend_domain_name = "bardhi.devops.konitron.com"
 
+# ============================================================================
 # Tags
+# ============================================================================
 tags = {
   Project   = "ApprenticeFinal"
   ManagedBy = "Terraform"
-  Owner     = "your-name"
+  Owner     = "Bardh Serreqi"
 }
 
