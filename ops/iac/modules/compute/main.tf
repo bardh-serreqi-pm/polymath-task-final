@@ -217,6 +217,12 @@ resource "aws_apigatewayv2_route" "options_root" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+resource "aws_apigatewayv2_route" "root" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 # API endpoints
 resource "aws_apigatewayv2_route" "api_proxy" {
   api_id    = aws_apigatewayv2_api.api.id
@@ -224,10 +230,64 @@ resource "aws_apigatewayv2_route" "api_proxy" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+resource "aws_apigatewayv2_route" "api_root" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /api"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "api_auth_check" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /api/auth/check"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "api_profile" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /api/profile"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "api_habits" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /api/habits"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "api_habits_proxy" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /api/habits/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "api_tasks" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /api/tasks"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "api_tasks_complete" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /api/tasks/complete"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "api_analysis" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /api/analysis"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 # Health check
 resource "aws_apigatewayv2_route" "health" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "ANY /health/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "health_root" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /health"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -244,6 +304,12 @@ resource "aws_apigatewayv2_route" "register" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+resource "aws_apigatewayv2_route" "register_root" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Register"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 resource "aws_apigatewayv2_route" "logout" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "ANY /Logout"
@@ -253,6 +319,12 @@ resource "aws_apigatewayv2_route" "logout" {
 resource "aws_apigatewayv2_route" "profile" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "ANY /Profile/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "profile_root" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Profile"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -267,6 +339,54 @@ resource "aws_apigatewayv2_route" "admin" {
 resource "aws_apigatewayv2_route" "habits" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "ANY /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "add_habit" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Add-Habit/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "add_habit_root" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Add-Habit"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "delete_habit" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /delete-habit/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "habit_manager" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Habit-Manager/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "habit_manager_root" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Habit-Manager"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "habit_infos" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Habit-Infos/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "habits_analysis" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Habits-Analysis/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "habits_analysis_root" {
+  api_id    = aws_apigatewayv2_api.api.id
+  route_key = "ANY /Habits-Analysis"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
