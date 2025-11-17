@@ -69,7 +69,7 @@ phases:
               exit 1
             fi
           else
-            echo "Running API health check against ${API_URL}/health ..."
+            echo "Running API health check against ${API_URL}/health/ ..."
             if [ -z "${API_URL:-}" ]; then
               echo "API_URL environment variable is not set."
               exit 1
@@ -80,14 +80,40 @@ phases:
               echo "Skipping health check. Please update api_gateway_url in terraform.tfvars with the actual API Gateway URL."
               echo "Health check skipped (placeholder URL detected)"
             else
-              echo "Attempting health check against: ${API_URL}/health"
-              STATUS_CODE="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${API_URL}/health" 2>&1 || echo "000")"
+              # Try health check with trailing slash (Django default)
+              echo "Attempting health check against: ${API_URL}/health/"
+              RESPONSE=$(curl -s -w "\n%{http_code}" -L --max-time 10 "${API_URL}/health/" 2>&1 || echo -e "\n000")
+              BODY=$(echo "$RESPONSE" | head -n -1)
+              STATUS_CODE=$(echo "$RESPONSE" | tail -n 1)
+              
+              echo "Response status: $STATUS_CODE"
+              if [ -n "$BODY" ]; then
+                echo "Response body: $BODY"
+              fi
+              
               if [ "$STATUS_CODE" = "200" ]; then
-                echo "Health check passed with status 200."
+                echo "✓ Health check passed with status 200."
               else
-                echo "Health check failed with status ${STATUS_CODE}."
-                echo "This may indicate the API is not yet deployed or the URL is incorrect."
-                exit 1
+                echo "✗ Health check failed with status ${STATUS_CODE}."
+                
+                # Try without trailing slash as fallback
+                echo "Retrying without trailing slash: ${API_URL}/health"
+                RESPONSE2=$(curl -s -w "\n%{http_code}" -L --max-time 10 "${API_URL}/health" 2>&1 || echo -e "\n000")
+                BODY2=$(echo "$RESPONSE2" | head -n -1)
+                STATUS_CODE2=$(echo "$RESPONSE2" | tail -n 1)
+                
+                echo "Response status: $STATUS_CODE2"
+                if [ -n "$BODY2" ]; then
+                  echo "Response body: $BODY2"
+                fi
+                
+                if [ "$STATUS_CODE2" = "200" ]; then
+                  echo "✓ Health check passed with status 200 (without trailing slash)."
+                else
+                  echo "✗ Both health check attempts failed."
+                  echo "This may indicate the API is not yet deployed or there is a configuration issue."
+                  exit 1
+                fi
               fi
             fi
           fi
