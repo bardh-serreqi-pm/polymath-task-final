@@ -244,19 +244,19 @@ resource "aws_apigatewayv2_route" "api_root" {
 
 resource "aws_apigatewayv2_route" "api_auth_check" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /api/auth/check/"
+  route_key = "ANY /api/auth/check"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 resource "aws_apigatewayv2_route" "api_profile" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /api/profile/"
+  route_key = "ANY /api/profile"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 resource "aws_apigatewayv2_route" "api_habits" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /api/habits/"
+  route_key = "ANY /api/habits"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -268,19 +268,19 @@ resource "aws_apigatewayv2_route" "api_habits_proxy" {
 
 resource "aws_apigatewayv2_route" "api_tasks" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /api/tasks/"
+  route_key = "ANY /api/tasks"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 resource "aws_apigatewayv2_route" "api_tasks_complete" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /api/tasks/complete/"
+  route_key = "ANY /api/tasks/complete"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 resource "aws_apigatewayv2_route" "api_analysis" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /api/analysis/"
+  route_key = "ANY /api/analysis"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -293,14 +293,14 @@ resource "aws_apigatewayv2_route" "health" {
 
 resource "aws_apigatewayv2_route" "health_root" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /health/"
+  route_key = "ANY /health"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 # Django authentication routes
 resource "aws_apigatewayv2_route" "login" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /Login/"
+  route_key = "ANY /Login"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -312,13 +312,13 @@ resource "aws_apigatewayv2_route" "register" {
 
 resource "aws_apigatewayv2_route" "register_root" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /Register/"
+  route_key = "ANY /Register"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 resource "aws_apigatewayv2_route" "logout" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /Logout/"
+  route_key = "ANY /Logout"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -330,7 +330,7 @@ resource "aws_apigatewayv2_route" "profile" {
 
 resource "aws_apigatewayv2_route" "profile_root" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /Profile/"
+  route_key = "ANY /Profile"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -356,7 +356,7 @@ resource "aws_apigatewayv2_route" "add_habit" {
 
 resource "aws_apigatewayv2_route" "add_habit_root" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /Add-Habit/"
+  route_key = "ANY /Add-Habit"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -374,7 +374,7 @@ resource "aws_apigatewayv2_route" "habit_manager" {
 
 resource "aws_apigatewayv2_route" "habit_manager_root" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /Habit-Manager/"
+  route_key = "ANY /Habit-Manager"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -392,7 +392,7 @@ resource "aws_apigatewayv2_route" "habits_analysis" {
 
 resource "aws_apigatewayv2_route" "habits_analysis_root" {
   api_id    = aws_apigatewayv2_api.api.id
-  route_key = "ANY /Habits-Analysis/"
+  route_key = "ANY /Habits-Analysis"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
