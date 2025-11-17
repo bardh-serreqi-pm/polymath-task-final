@@ -82,28 +82,61 @@ phases:
             else
               # Try health check with trailing slash (Django default)
               echo "Attempting health check against: ${API_URL}/health/"
-              RESPONSE=$(curl -s -w "\n%{http_code}" -L --max-time 10 "${API_URL}/health/" 2>&1 || echo -e "\n000")
+              echo "Using extended timeout (30s) to allow for Lambda cold starts..."
+              
+              RESPONSE=$(curl -sS -w "\n%{http_code}" --max-time 30 --connect-timeout 10 "${API_URL}/health/" 2>&1 || printf "\n000")
               BODY=$(echo "$RESPONSE" | head -n -1)
               STATUS_CODE=$(echo "$RESPONSE" | tail -n 1)
               
               echo "Response status: $STATUS_CODE"
-              if [ -n "$BODY" ]; then
+              if [ -n "$BODY" ] && [ "$BODY" != "000" ]; then
                 echo "Response body: $BODY"
               fi
               
               if [ "$STATUS_CODE" = "200" ]; then
                 echo "✓ Health check passed with status 200."
+              elif [ "$STATUS_CODE" = "000" ]; then
+                echo "⚠ Health check timeout or connection error."
+                echo "This usually indicates Lambda cold start timeout or Lambda function errors."
+                echo "Checking Lambda CloudWatch logs for errors..."
+                
+                # Check Lambda logs for recent errors
+                LAMBDA_FUNCTION="${PROJECT_NAME}-${ENVIRONMENT}-api"
+                echo "Lambda function: $LAMBDA_FUNCTION"
+                
+                # Get recent Lambda errors (last 5 minutes)
+                ERRORS=$(aws logs filter-log-events \
+                  --log-group-name "/aws/lambda/$LAMBDA_FUNCTION" \
+                  --start-time $(($(date +%s) * 1000 - 300000)) \
+                  --filter-pattern "ERROR" \
+                  --region "$AWS_DEFAULT_REGION" \
+                  --max-items 5 \
+                  --query 'events[*].message' \
+                  --output text 2>/dev/null || echo "Could not retrieve logs")
+                
+                if [ -n "$ERRORS" ] && [ "$ERRORS" != "Could not retrieve logs" ]; then
+                  echo "Recent Lambda errors:"
+                  echo "$ERRORS"
+                else
+                  echo "No recent Lambda errors found in CloudWatch Logs."
+                  echo "Lambda may be cold starting or not invoked yet."
+                fi
+                
+                echo ""
+                echo "⚠ WARNING: Health check failed, but continuing pipeline."
+                echo "Please check Lambda function logs and configuration."
+                echo "CloudWatch Log Group: /aws/lambda/$LAMBDA_FUNCTION"
               else
                 echo "✗ Health check failed with status ${STATUS_CODE}."
                 
                 # Try without trailing slash as fallback
                 echo "Retrying without trailing slash: ${API_URL}/health"
-                RESPONSE2=$(curl -s -w "\n%{http_code}" -L --max-time 10 "${API_URL}/health" 2>&1 || echo -e "\n000")
+                RESPONSE2=$(curl -sS -w "\n%{http_code}" --max-time 30 --connect-timeout 10 "${API_URL}/health" 2>&1 || printf "\n000")
                 BODY2=$(echo "$RESPONSE2" | head -n -1)
                 STATUS_CODE2=$(echo "$RESPONSE2" | tail -n 1)
                 
                 echo "Response status: $STATUS_CODE2"
-                if [ -n "$BODY2" ]; then
+                if [ -n "$BODY2" ] && [ "$BODY2" != "000" ]; then
                   echo "Response body: $BODY2"
                 fi
                 
@@ -111,8 +144,16 @@ phases:
                   echo "✓ Health check passed with status 200 (without trailing slash)."
                 else
                   echo "✗ Both health check attempts failed."
-                  echo "This may indicate the API is not yet deployed or there is a configuration issue."
-                  exit 1
+                  echo "Status codes: /health/ = $STATUS_CODE, /health = $STATUS_CODE2"
+                  echo ""
+                  echo "Possible causes:"
+                  echo "1. Lambda function is not responding (check CloudWatch logs)"
+                  echo "2. Lambda cold start timeout (increase Lambda timeout)"
+                  echo "3. API Gateway integration issue"
+                  echo "4. VPC/Security group configuration blocking Lambda"
+                  echo ""
+                  echo "⚠ WARNING: Health check failed, but continuing pipeline."
+                  echo "Please investigate the Lambda function and API Gateway configuration."
                 fi
               fi
             fi

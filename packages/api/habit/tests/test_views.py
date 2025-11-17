@@ -34,7 +34,7 @@ class ViewTestCase(TestCase):
         request.user = AnonymousUser()
         response = HabitManagerView.add_habit(request)
         assert response.status_code == 302 
-        assert response.url == '/Login'
+        assert response.url == '/Login/'
 
 
     def test_delete_habit_authenticated_user(self):
@@ -52,7 +52,7 @@ class ViewTestCase(TestCase):
         response = HabitManagerView.delete_habit(request, self.habit.pk)
         assert response.status_code == 302
         assert Habit.objects.filter(pk=self.habit.pk).exists()
-        assert response.url == '/Login'
+        assert response.url == '/Login/'
 
 
     def test_mark_task_completed(self):

@@ -259,7 +259,7 @@ resource "aws_cloudfront_distribution" "this" {
 
   # Route Django authentication and admin routes to API Gateway
   ordered_cache_behavior {
-    path_pattern           = "/Login"
+    path_pattern           = "/Login*"
     allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
@@ -307,7 +307,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   ordered_cache_behavior {
-    path_pattern           = "/Logout"
+    path_pattern           = "/Logout*"
     allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     target_origin_id       = local.api_origin_id
@@ -417,23 +417,6 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   web_acl_id = aws_wafv2_web_acl.this.arn
-
-  # Custom error responses for SPA routing
-  # When a route like /register doesn't exist in S3, return index.html with 200 status
-  # This is REQUIRED for React Router (BrowserRouter) to work with S3/CloudFront
-  custom_error_response {
-    error_code            = 403
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 300
-  }
-
-  custom_error_response {
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 300
-  }
 
   tags = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-distribution" })
 

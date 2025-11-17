@@ -6,7 +6,7 @@ async function getCsrfToken() {
     // Make a GET request to get the CSRF token cookie
     // Try Login first (for login requests), then Register (for registration)
     try {
-      await api.get('/Login')
+      await api.get('/Login/')
     } catch {
       await api.get('/Register/')
     }
@@ -28,7 +28,7 @@ export const authService = {
       formData.append('username', username)
       formData.append('password', password)
 
-      const response = await api.post('/Login', formData, {
+      const response = await api.post('/Login/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -82,7 +82,7 @@ export const authService = {
       // Django LogoutView requires POST with CSRF token
       // Use form data to match Django's expectations
       const formData = new FormData()
-      const response = await api.post('/Logout', formData, {
+      const response = await api.post('/Logout/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
