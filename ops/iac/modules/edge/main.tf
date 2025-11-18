@@ -144,7 +144,7 @@ resource "aws_cloudfront_origin_request_policy" "api_with_cookies" {
   headers_config {
     header_behavior = "whitelist"
     headers {
-      items = ["CloudFront-Forwarded-Proto", "Host", "Origin", "Referer", "X-CSRFToken", "Content-Type", "Accept"]
+      items = ["CloudFront-Forwarded-Proto", "Origin", "Referer", "X-CSRFToken", "Content-Type", "Accept"]
     }
   }
 
@@ -465,53 +465,10 @@ resource "aws_wafv2_web_acl" "this" {
     }
   }
 
-  # Rule 7: Bot protection for registration endpoint
-  rule {
-    name     = "BotProtection"
-    priority = 7
-
-    override_action {
-      none {}
-    }
-
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesBotControlRuleSet"
-        vendor_name = "AWS"
-
-        managed_rule_group_configs {
-          aws_managed_rules_bot_control_rule_set {
-            inspection_level = "COMMON"
-          }
-        }
-
-        scope_down_statement {
-          byte_match_statement {
-            search_string         = "/register"
-            positional_constraint = "STARTS_WITH"
-            field_to_match {
-              uri_path {}
-            }
-            text_transformation {
-              priority = 0
-              type     = "LOWERCASE"
-            }
-          }
-        }
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.project_name}-${var.environment}-bot-protection"
-      sampled_requests_enabled   = true
-    }
-  }
-
-  # Rule 8: Block suspicious User-Agent strings
+  # Rule 7: Block suspicious User-Agent strings
   rule {
     name     = "BlockSuspiciousUserAgents"
-    priority = 8
+    priority = 7
 
     action {
       block {
@@ -579,10 +536,10 @@ resource "aws_wafv2_web_acl" "this" {
     }
   }
 
-  # Rule 9: Allow health checks without restrictions
+  # Rule 8: Allow health checks without restrictions
   rule {
     name     = "AllowHealthCheck"
-    priority = 9
+    priority = 8
 
     action {
       allow {}
