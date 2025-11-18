@@ -1,0 +1,1 @@
+{ version:2.0,routeKey:GET /health/,rawPath:/health/,rawQueryString:,headers:{host:1qcc7ubeod.execute-api.us-east-1.amazonaws.com},requestContext:{http:{method:GET,path:/health/},stage:staging},isBase64Encoded:false}

@@ -29,23 +29,31 @@ class HealthCheckView(View):
             'services': {}
         }
         
+        logger = logging.getLogger(__name__)
+        logger.info("Health check: starting database check")
+
         # Check database
         try:
             with connection.cursor() as cursor:
+                logger.debug("Health check: executing SELECT 1")
                 cursor.execute("SELECT 1")
                 health_status['services']['database'] = {
                     'status': 'healthy',
                     'message': 'Database connection successful'
                 }
+                logger.info("Health check: database check passed")
         except Exception as e:
             health_status['status'] = 'unhealthy'
+            logger.exception("Health check: database check failed")
             health_status['services']['database'] = {
                 'status': 'unhealthy',
                 'message': str(e)
             }
         
         # Check Redis cache
+        logger.info("Health check: starting Redis check")
         try:
+            logger.debug("Health check: writing to Redis cache key")
             cache.set('health_check', 'ok', 10)
             cache_result = cache.get('health_check')
             if cache_result == 'ok':
@@ -53,14 +61,17 @@ class HealthCheckView(View):
                     'status': 'healthy',
                     'message': 'Redis cache connection successful'
                 }
+                logger.info("Health check: Redis check passed")
             else:
                 health_status['status'] = 'unhealthy'
+                logger.warning("Health check: Redis read/write mismatch (expected 'ok', got %s)", cache_result)
                 health_status['services']['cache'] = {
                     'status': 'unhealthy',
                     'message': 'Cache read/write failed'
                 }
         except Exception as e:
             health_status['status'] = 'unhealthy'
+            logger.exception("Health check: Redis check failed")
             health_status['services']['cache'] = {
                 'status': 'unhealthy',
                 'message': str(e)
