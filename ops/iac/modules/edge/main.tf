@@ -257,8 +257,59 @@ resource "aws_cloudfront_distribution" "this" {
     response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
   }
 
-  # Only route /admin and /health to API Gateway
-  # React SPA handles all other routes (/login, /register, /profile, etc.)
+  # Django authentication endpoints - must match nginx.conf configuration
+  # Routing strategy:
+  #   - /login, /register, /profile (lowercase) → React SPA (from S3)
+  #   - /Login/, /Register/, /Profile/ (uppercase) → Django API (form submission endpoints)
+  #   - This allows React to render UI while Django handles authentication
+  ordered_cache_behavior {
+    path_pattern           = "/Login*"
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/Register*"
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/Logout*"
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/Profile*"
+    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = local.api_origin_id
+    viewer_protocol_policy = "https-only"
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
   ordered_cache_behavior {
     path_pattern           = "/admin/*"
     allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
