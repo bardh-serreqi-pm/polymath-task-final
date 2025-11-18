@@ -1,6 +1,7 @@
 """
 Health check views for monitoring service status.
 """
+import logging
 from django.http import JsonResponse
 from django.db import connection
 from django.core.cache import cache
