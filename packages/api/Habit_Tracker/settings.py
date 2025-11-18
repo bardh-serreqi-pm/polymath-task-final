@@ -241,7 +241,7 @@ SESSION_COOKIE_NAME = 'sessionid'
 SESSION_COOKIE_AGE = 86400  # 24 hours
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'  # Set to True if using HTTPS
-SESSION_COOKIE_SAMESITE = 'Lax'  # Allows cookies to be sent in cross-site requests
+SESSION_COOKIE_SAMESITE = 'None' if os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True' else 'Lax'  # None for HTTPS, Lax for HTTP
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request to extend expiry
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
@@ -250,7 +250,7 @@ CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_COOKIE_AGE = 86400
 CSRF_COOKIE_HTTPONLY = False  # Must be False for JavaScript to access
 CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False') == 'True'  # Set to True if using HTTPS
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'None' if os.environ.get('CSRF_COOKIE_SECURE', 'False') == 'True' else 'Lax'  # None for HTTPS cross-origin
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else [
     'https://bardhi.devops.konitron.com',
     'https://d3dw2izdb09tes.cloudfront.net',
