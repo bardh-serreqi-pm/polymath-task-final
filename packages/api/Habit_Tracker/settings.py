@@ -251,7 +251,10 @@ CSRF_COOKIE_AGE = 86400
 CSRF_COOKIE_HTTPONLY = False  # Must be False for JavaScript to access
 CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False') == 'True'  # Set to True if using HTTPS
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else [
+    'https://bardhi.devops.konitron.com',
+    'https://d3dw2izdb09tes.cloudfront.net',
+]
 CSRF_USE_SESSIONS = False  # Use cookie-based CSRF tokens
 
 # Security Settings
