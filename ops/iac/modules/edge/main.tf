@@ -217,21 +217,22 @@ function handler(event) {
     var request = event.request;
     var uri = request.uri;
     
-    // If URI doesn't have a file extension and doesn't end with /
-    // AND it's not an API/Django route, rewrite to /index.html
-    if (!uri.includes('.') && !uri.endsWith('/')) {
-        // Don't rewrite API, Django auth, admin, or health routes
-        if (!uri.startsWith('/api/') && 
-            !uri.startsWith('/Login') && 
-            !uri.startsWith('/Register') && 
-            !uri.startsWith('/Logout') && 
-            !uri.startsWith('/Profile') && 
-            !uri.startsWith('/admin') && 
-            !uri.startsWith('/health')) {
-            request.uri = '/index.html';
-        }
+    // Skip processing for API and Django routes entirely
+    if (uri.startsWith('/api/') || 
+        uri.startsWith('/Login') || 
+        uri.startsWith('/Register') || 
+        uri.startsWith('/Logout') || 
+        uri.startsWith('/Profile') || 
+        uri.startsWith('/admin') || 
+        uri.startsWith('/health')) {
+        return request;
     }
-    // If URI ends with /, append index.html
+    
+    // For React SPA routes: rewrite to /index.html
+    if (!uri.includes('.')) {
+        request.uri = '/index.html';
+    }
+    // If URI ends with /, append index.html (only for static files)
     else if (uri.endsWith('/')) {
         request.uri += 'index.html';
     }
