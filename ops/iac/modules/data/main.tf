@@ -25,11 +25,11 @@ locals {
 
 resource "aws_security_group" "aurora" {
   name        = "${var.project_name}-${var.environment}-aurora-sg"
-  description = "Allow access to Aurora from application layer"
+  description = "Allow access to Aurora PostgreSQL from application layer"
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "VPC internal access"
+    description = "PostgreSQL access from VPC (port 5432)"
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
@@ -37,6 +37,7 @@ resource "aws_security_group" "aurora" {
   }
 
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -48,11 +49,11 @@ resource "aws_security_group" "aurora" {
 
 resource "aws_security_group" "redis" {
   name        = "${var.project_name}-${var.environment}-redis-sg"
-  description = "Allow access to Redis from application layer"
+  description = "Allow access to ElastiCache Redis from application layer"
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "VPC internal access"
+    description = "Redis access from VPC (port 6379 with TLS)"
     from_port   = 6379
     to_port     = 6379
     protocol    = "tcp"
@@ -60,6 +61,7 @@ resource "aws_security_group" "redis" {
   }
 
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -118,6 +120,7 @@ resource "aws_rds_cluster" "aurora" {
   database_name                = var.db_name
   master_username              = var.db_master_username
   master_password              = random_password.aurora_master.result
+  port                         = 5432 # PostgreSQL default port
   db_subnet_group_name         = aws_db_subnet_group.aurora.name
   vpc_security_group_ids       = [aws_security_group.aurora.id]
   storage_encrypted            = true

@@ -32,6 +32,7 @@ resource "aws_security_group" "lambda" {
   vpc_id      = var.vpc_id
 
   egress {
+    description = "Allow all outbound traffic (Aurora:5432, Redis:6379, AWS APIs, etc.)"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -42,7 +43,7 @@ resource "aws_security_group" "lambda" {
 }
 
 resource "aws_security_group_rule" "lambda_to_aurora" {
-  description              = "Allow Lambda to connect to Aurora"
+  description              = "Allow Lambda to connect to Aurora PostgreSQL (port 5432)"
   type                     = "ingress"
   from_port                = 5432
   to_port                  = 5432
@@ -52,7 +53,7 @@ resource "aws_security_group_rule" "lambda_to_aurora" {
 }
 
 resource "aws_security_group_rule" "lambda_to_redis" {
-  description              = "Allow Lambda to connect to Redis"
+  description              = "Allow Lambda to connect to ElastiCache Redis (port 6379 with TLS)"
   type                     = "ingress"
   from_port                = 6379
   to_port                  = 6379

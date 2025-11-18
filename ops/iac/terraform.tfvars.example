@@ -36,6 +36,10 @@ lambda_image_uri = "967746377724.dkr.ecr.us-east-1.amazonaws.com/apprentice-fina
 lambda_environment = {
   DJANGO_SETTINGS_MODULE = "Habit_Tracker.settings"
   DEBUG                  = "false"
+  REDIS_USE_TLS          = "true"   # ElastiCache Serverless requires TLS
+  SESSION_COOKIE_SECURE  = "true"   # Required for HTTPS
+  CSRF_COOKIE_SECURE     = "true"   # Required for HTTPS
+  # Note: REDIS_PORT is auto-populated from SSM parameter (ElastiCache endpoint)
 }
 
 # ============================================================================
