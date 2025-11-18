@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-kh6@x^%b42999#ii=hnc&dz4+j5giscrg@fh-8s4jo0@(i2ga2)')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'true').lower() == 'true'
 
 # ALLOWED_HOSTS configuration
 # For Lambda/API Gateway, we need to allow API Gateway domain
@@ -240,8 +240,8 @@ else:
 SESSION_COOKIE_NAME = 'sessionid'
 SESSION_COOKIE_AGE = 86400  # 24 hours
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'  # Set to True if using HTTPS
-SESSION_COOKIE_SAMESITE = 'None' if os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True' else 'Lax'  # None for HTTPS, Lax for HTTP
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true'  # Set to True if using HTTPS
+SESSION_COOKIE_SAMESITE = 'None' if os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true' else 'Lax'  # None for HTTPS, Lax for HTTP
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request to extend expiry
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
@@ -249,8 +249,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_COOKIE_AGE = 86400
 CSRF_COOKIE_HTTPONLY = False  # Must be False for JavaScript to access
-CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False') == 'True'  # Set to True if using HTTPS
-CSRF_COOKIE_SAMESITE = 'None' if os.environ.get('CSRF_COOKIE_SECURE', 'False') == 'True' else 'Lax'  # None for HTTPS cross-origin
+CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'false').lower() == 'true'  # Set to True if using HTTPS
+CSRF_COOKIE_SAMESITE = 'None' if os.environ.get('CSRF_COOKIE_SECURE', 'false').lower() == 'true' else 'Lax'  # None for HTTPS cross-origin
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else [
     'https://bardhi.devops.konitron.com',
     'https://d3dw2izdb09tes.cloudfront.net',
