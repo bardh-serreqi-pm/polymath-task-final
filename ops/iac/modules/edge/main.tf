@@ -257,67 +257,8 @@ resource "aws_cloudfront_distribution" "this" {
     response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
   }
 
-  # Route Django authentication and admin routes to API Gateway
-  ordered_cache_behavior {
-    path_pattern           = "/Login*"
-    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
-    cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = local.api_origin_id
-    viewer_protocol_policy = "https-only"
-
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/Register*"
-    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
-    cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = local.api_origin_id
-    viewer_protocol_policy = "https-only"
-
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/register*"
-    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
-    cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = local.api_origin_id
-    viewer_protocol_policy = "https-only"
-
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/Profile/*"
-    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
-    cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = local.api_origin_id
-    viewer_protocol_policy = "https-only"
-
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/Logout*"
-    allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
-    cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = local.api_origin_id
-    viewer_protocol_policy = "https-only"
-
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
-    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
-  }
-
+  # Only route /admin and /health to API Gateway
+  # React SPA handles all other routes (/login, /register, /profile, etc.)
   ordered_cache_behavior {
     path_pattern           = "/admin/*"
     allowed_methods        = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
@@ -401,6 +342,19 @@ resource "aws_cloudfront_distribution" "this" {
     cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled.id
     origin_request_policy_id   = aws_cloudfront_origin_request_policy.api_with_cookies.id
     response_headers_policy_id = aws_cloudfront_response_headers_policy.cors_with_credentials.id
+  }
+
+  # SPA Routing: Serve index.html for 403/404 errors (client-side routes)
+  custom_error_response {
+    error_code         = 403
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
+
+  custom_error_response {
+    error_code         = 404
+    response_code      = 200
+    response_page_path = "/index.html"
   }
 
   restrictions {
