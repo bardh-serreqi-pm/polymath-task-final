@@ -206,6 +206,41 @@ locals {
   frontend_origin_id = "frontend-s3-origin"
 }
 
+# CloudFront Function to rewrite SPA routes to index.html
+resource "aws_cloudfront_function" "spa_rewrite" {
+  name    = "${var.project_name}-${var.environment}-spa-rewrite"
+  runtime = "cloudfront-js-1.0"
+  comment = "Rewrite SPA routes to index.html for React Router"
+  publish = true
+  code    = <<-EOT
+function handler(event) {
+    var request = event.request;
+    var uri = request.uri;
+    
+    // If URI doesn't have a file extension and doesn't end with /
+    // AND it's not an API/Django route, rewrite to /index.html
+    if (!uri.includes('.') && !uri.endsWith('/')) {
+        // Don't rewrite API, Django auth, admin, or health routes
+        if (!uri.startsWith('/api/') && 
+            !uri.startsWith('/Login') && 
+            !uri.startsWith('/Register') && 
+            !uri.startsWith('/Logout') && 
+            !uri.startsWith('/Profile') && 
+            !uri.startsWith('/admin') && 
+            !uri.startsWith('/health')) {
+            request.uri = '/index.html';
+        }
+    }
+    // If URI ends with /, append index.html
+    else if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+    }
+    
+    return request;
+}
+EOT
+}
+
 resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   comment             = "${var.project_name}-${var.environment} distribution"
@@ -242,6 +277,12 @@ resource "aws_cloudfront_distribution" "this" {
 
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_optimized.id
     origin_request_policy_id = data.aws_cloudfront_origin_request_policy.cors_s3.id
+
+    # Apply CloudFront Function to rewrite SPA routes
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa_rewrite.arn
+    }
   }
 
   # Route API endpoints to API Gateway
