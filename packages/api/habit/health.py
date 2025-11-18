@@ -7,6 +7,7 @@ from django.db import connection
 from django.core.cache import cache
 from django.views import View
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
 from django.db import models
 from django.utils import timezone
 
@@ -81,6 +82,82 @@ class HealthCheckView(View):
         # Return appropriate HTTP status code
         status_code = 200 if health_status['status'] == 'healthy' else 503
         return JsonResponse(health_status, status=status_code)
+
+
+class LoginAPIView(View):
+    """
+    API endpoint for user login.
+    """
+    
+    def post(self, request):
+        """
+        Authenticate user and create session.
+        
+        Expected POST data:
+        - username: user's username
+        - password: user's password
+        
+        Returns:
+        - success: boolean
+        - message: status message
+        - user: user data if successful
+        """
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        if not username or not password:
+            return JsonResponse({
+                'success': False,
+                'error': 'Username and password are required'
+            }, status=400)
+        
+        # Authenticate user
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            # Login user (creates session)
+            login(request, user)
+            return JsonResponse({
+                'success': True,
+                'message': 'Login successful',
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email or '',
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid username or password'
+            }, status=401)
+
+
+class LogoutAPIView(View):
+    """
+    API endpoint for user logout.
+    """
+    
+    def post(self, request):
+        """
+        Logout user and clear session.
+        
+        Returns:
+        - success: boolean
+        - message: status message
+        """
+        if request.user.is_authenticated:
+            username = request.user.username
+            logout(request)
+            return JsonResponse({
+                'success': True,
+                'message': f'User {username} logged out successfully'
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'message': 'No user was logged in'
+            })
 
 
 class AuthCheckView(View):
