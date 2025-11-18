@@ -205,7 +205,9 @@ if os.environ.get('REDIS_HOST'):
     
     # ElastiCache Serverless requires TLS
     if os.environ.get('REDIS_USE_TLS', 'false').lower() == 'true':
-        redis_location = f"rediss://{redis_host}:{redis_port}/1?ssl_cert_reqs=none"
+        # ElastiCache Serverless runs in cluster mode - must use database 0 (no /1)
+        # Cluster mode doesn't support SELECT command for switching databases
+        redis_location = f"rediss://{redis_host}:{redis_port}?ssl_cert_reqs=none"
         CACHES = {
             'default': {
                 'BACKEND': 'django.core.cache.backends.redis.RedisCache',
@@ -213,7 +215,7 @@ if os.environ.get('REDIS_HOST'):
             }
         }
     else:
-        # Non-TLS Redis (local development)
+        # Non-TLS Redis (local development) - can use database 1
         redis_location = f"redis://{redis_host}:{redis_port}/1"
         CACHES = {
             'default': {
