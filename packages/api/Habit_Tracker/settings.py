@@ -205,17 +205,11 @@ if os.environ.get('REDIS_HOST'):
     
     # ElastiCache Serverless requires TLS
     if os.environ.get('REDIS_USE_TLS', 'false').lower() == 'true':
-        redis_location = f"rediss://{redis_host}:{redis_port}/1"
+        redis_location = f"rediss://{redis_host}:{redis_port}/1?ssl_cert_reqs=none"
         CACHES = {
             'default': {
                 'BACKEND': 'django.core.cache.backends.redis.RedisCache',
                 'LOCATION': redis_location,
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'CONNECTION_POOL_KWARGS': {
-                        'ssl_cert_reqs': None,  # Required for ElastiCache Serverless
-                    }
-                }
             }
         }
     else:
