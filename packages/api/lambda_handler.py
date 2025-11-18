@@ -83,9 +83,27 @@ except Exception as e:
 # This happens after Django is set up by the ASGI/WSGI import
 try:
     from django.core.management import execute_from_command_line
+    from django.db import connection
+    
     # Only run migrations if DB_MIGRATE_ON_START is set
     if os.environ.get('DB_MIGRATE_ON_START', 'false').lower() == 'true':
-        execute_from_command_line(['manage.py', 'migrate', '--noinput'])
+        # Check if migrations are needed by checking if auth_user table exists
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'auth_user'
+                );
+            """)
+            tables_exist = cursor.fetchone()[0]
+        
+        if not tables_exist:
+            logger.info("Database tables not found. Running migrations...")
+            execute_from_command_line(['manage.py', 'migrate', '--noinput'])
+            logger.info("Migrations completed successfully")
+        else:
+            logger.info("Database tables already exist. Skipping migrations.")
 except Exception as e:
     logger.warning("Could not run migrations on cold start: %s", e, exc_info=True)
 

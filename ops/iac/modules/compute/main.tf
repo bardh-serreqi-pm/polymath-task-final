@@ -157,7 +157,7 @@ resource "aws_lambda_function" "api" {
         AURORA_WRITER_ENDPOINT_PARAM = var.aurora_writer_endpoint_param
         REDIS_ENDPOINT_PARAM         = var.redis_endpoint_param
         DJANGO_SETTINGS_MODULE       = "Habit_Tracker.settings"
-        DB_MIGRATE_ON_START          = "false"
+        DB_MIGRATE_ON_START          = "true"          # Temporarily enabled to run migrations
         API_GATEWAY_STAGE            = var.environment # Stage name for middleware to strip prefix
       },
       var.lambda_environment
