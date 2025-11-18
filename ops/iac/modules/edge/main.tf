@@ -163,15 +163,16 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
 
 resource "aws_wafv2_web_acl" "this" {
   name        = "${var.project_name}-${var.environment}-waf"
-  description = "Baseline WAF for CloudFront"
+  description = "Custom WAF for Django Habit Tracker Application"
   scope       = "CLOUDFRONT"
 
   default_action {
     allow {}
   }
 
+  # Rule 1: Block known malicious IP reputation
   rule {
-    name     = "AWSManagedCommonRuleSet"
+    name     = "BlockIPReputation"
     priority = 1
 
     override_action {
@@ -180,16 +181,469 @@ resource "aws_wafv2_web_acl" "this" {
 
     statement {
       managed_rule_group_statement {
-        name        = "AWSManagedRulesCommonRuleSet"
+        name        = "AWSManagedRulesAmazonIpReputationList"
         vendor_name = "AWS"
       }
     }
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name                = "${var.project_name}-${var.environment}-commonrules"
+      metric_name                = "${var.project_name}-${var.environment}-ip-reputation"
       sampled_requests_enabled   = true
     }
+  }
+
+  # Rule 2: Rate limit authentication endpoints (Login/Register)
+  rule {
+    name     = "RateLimitAuth"
+    priority = 2
+
+    action {
+      block {
+        custom_response {
+          response_code            = 429
+          custom_response_body_key = "rate_limit_auth"
+        }
+      }
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = 100 # 100 requests per 5 minutes per IP
+        aggregate_key_type = "IP"
+
+        scope_down_statement {
+          or_statement {
+            statement {
+              byte_match_statement {
+                search_string         = "/login"
+                positional_constraint = "STARTS_WITH"
+                field_to_match {
+                  uri_path {}
+                }
+                text_transformation {
+                  priority = 0
+                  type     = "LOWERCASE"
+                }
+              }
+            }
+            statement {
+              byte_match_statement {
+                search_string         = "/register"
+                positional_constraint = "STARTS_WITH"
+                field_to_match {
+                  uri_path {}
+                }
+                text_transformation {
+                  priority = 0
+                  type     = "LOWERCASE"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-rate-limit-auth"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Rule 3: Rate limit API endpoints (general protection)
+  rule {
+    name     = "RateLimitAPI"
+    priority = 3
+
+    action {
+      block {
+        custom_response {
+          response_code            = 429
+          custom_response_body_key = "rate_limit_api"
+        }
+      }
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = 2000 # 2000 requests per 5 minutes per IP
+        aggregate_key_type = "IP"
+
+        scope_down_statement {
+          byte_match_statement {
+            search_string         = "/api/"
+            positional_constraint = "STARTS_WITH"
+            field_to_match {
+              uri_path {}
+            }
+            text_transformation {
+              priority = 0
+              type     = "LOWERCASE"
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-rate-limit-api"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Rule 4: SQL Injection Protection for POST requests
+  rule {
+    name     = "SQLInjectionProtection"
+    priority = 4
+
+    action {
+      block {
+        custom_response {
+          response_code            = 403
+          custom_response_body_key = "sql_injection"
+        }
+      }
+    }
+
+    statement {
+      and_statement {
+        statement {
+          byte_match_statement {
+            search_string         = "post"
+            positional_constraint = "EXACTLY"
+            field_to_match {
+              method {}
+            }
+            text_transformation {
+              priority = 0
+              type     = "LOWERCASE"
+            }
+          }
+        }
+        statement {
+          or_statement {
+            statement {
+              sqli_match_statement {
+                field_to_match {
+                  body {
+                    oversize_handling = "CONTINUE"
+                  }
+                }
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+              }
+            }
+            statement {
+              sqli_match_statement {
+                field_to_match {
+                  query_string {}
+                }
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-sqli-protection"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Rule 5: XSS Protection for user input
+  rule {
+    name     = "XSSProtection"
+    priority = 5
+
+    action {
+      block {
+        custom_response {
+          response_code            = 403
+          custom_response_body_key = "xss_detected"
+        }
+      }
+    }
+
+    statement {
+      and_statement {
+        statement {
+          byte_match_statement {
+            search_string         = "post"
+            positional_constraint = "EXACTLY"
+            field_to_match {
+              method {}
+            }
+            text_transformation {
+              priority = 0
+              type     = "LOWERCASE"
+            }
+          }
+        }
+        statement {
+          or_statement {
+            statement {
+              xss_match_statement {
+                field_to_match {
+                  body {
+                    oversize_handling = "CONTINUE"
+                  }
+                }
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+              }
+            }
+            statement {
+              xss_match_statement {
+                field_to_match {
+                  query_string {}
+                }
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-xss-protection"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Rule 6: Size restriction on request body
+  rule {
+    name     = "SizeRestriction"
+    priority = 6
+
+    action {
+      block {
+        custom_response {
+          response_code            = 413
+          custom_response_body_key = "request_too_large"
+        }
+      }
+    }
+
+    statement {
+      size_constraint_statement {
+        comparison_operator = "GT"
+        size                = 1048576 # 1MB limit for request body
+        field_to_match {
+          body {
+            oversize_handling = "CONTINUE"
+          }
+        }
+        text_transformation {
+          priority = 0
+          type     = "NONE"
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-size-restriction"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Rule 7: Bot protection for registration endpoint
+  rule {
+    name     = "BotProtection"
+    priority = 7
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesBotControlRuleSet"
+        vendor_name = "AWS"
+
+        managed_rule_group_configs {
+          aws_managed_rules_bot_control_rule_set {
+            inspection_level = "COMMON"
+          }
+        }
+
+        scope_down_statement {
+          byte_match_statement {
+            search_string         = "/register"
+            positional_constraint = "STARTS_WITH"
+            field_to_match {
+              uri_path {}
+            }
+            text_transformation {
+              priority = 0
+              type     = "LOWERCASE"
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-bot-protection"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Rule 8: Block suspicious User-Agent strings
+  rule {
+    name     = "BlockSuspiciousUserAgents"
+    priority = 8
+
+    action {
+      block {
+        custom_response {
+          response_code            = 403
+          custom_response_body_key = "suspicious_user_agent"
+        }
+      }
+    }
+
+    statement {
+      or_statement {
+        statement {
+          byte_match_statement {
+            search_string         = "sqlmap"
+            positional_constraint = "CONTAINS"
+            field_to_match {
+              single_header {
+                name = "user-agent"
+              }
+            }
+            text_transformation {
+              priority = 0
+              type     = "LOWERCASE"
+            }
+          }
+        }
+        statement {
+          byte_match_statement {
+            search_string         = "nikto"
+            positional_constraint = "CONTAINS"
+            field_to_match {
+              single_header {
+                name = "user-agent"
+              }
+            }
+            text_transformation {
+              priority = 0
+              type     = "LOWERCASE"
+            }
+          }
+        }
+        statement {
+          byte_match_statement {
+            search_string         = "nmap"
+            positional_constraint = "CONTAINS"
+            field_to_match {
+              single_header {
+                name = "user-agent"
+              }
+            }
+            text_transformation {
+              priority = 0
+              type     = "LOWERCASE"
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-suspicious-ua"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Rule 9: Allow health checks without restrictions
+  rule {
+    name     = "AllowHealthCheck"
+    priority = 9
+
+    action {
+      allow {}
+    }
+
+    statement {
+      byte_match_statement {
+        search_string         = "/health"
+        positional_constraint = "STARTS_WITH"
+        field_to_match {
+          uri_path {}
+        }
+        text_transformation {
+          priority = 0
+          type     = "LOWERCASE"
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-${var.environment}-allow-health"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # Custom response bodies for blocked requests
+  custom_response_body {
+    key          = "rate_limit_auth"
+    content      = "{\"error\": \"Too many authentication attempts. Please try again later.\"}"
+    content_type = "APPLICATION_JSON"
+  }
+
+  custom_response_body {
+    key          = "rate_limit_api"
+    content      = "{\"error\": \"Too many requests. Please slow down.\"}"
+    content_type = "APPLICATION_JSON"
+  }
+
+  custom_response_body {
+    key          = "sql_injection"
+    content      = "{\"error\": \"Invalid request detected.\"}"
+    content_type = "APPLICATION_JSON"
+  }
+
+  custom_response_body {
+    key          = "xss_detected"
+    content      = "{\"error\": \"Invalid content detected.\"}"
+    content_type = "APPLICATION_JSON"
+  }
+
+  custom_response_body {
+    key          = "request_too_large"
+    content      = "{\"error\": \"Request body too large. Maximum size is 1MB.\"}"
+    content_type = "APPLICATION_JSON"
+  }
+
+  custom_response_body {
+    key          = "suspicious_user_agent"
+    content      = "{\"error\": \"Access denied.\"}"
+    content_type = "APPLICATION_JSON"
   }
 
   visibility_config {
