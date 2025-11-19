@@ -118,6 +118,23 @@ resource "aws_codepipeline" "terraform" {
     }
   }
 
+  # Approval Stage
+  stage {
+    name = "Approval"
+
+    action {
+      name     = "Manual-Approval"
+      category = "Approval"
+      owner    = "AWS"
+      provider = "Manual"
+      version  = "1"
+
+      configuration = {
+        CustomData = "Please review the Terraform plan output and approve infrastructure changes."
+      }
+    }
+  }
+
   # Terraform Apply Stage
   stage {
     name = "Apply"
@@ -455,7 +472,7 @@ resource "aws_codepipeline" "frontend" {
     name = "Build"
 
     action {
-      name             = "Build-Image"
+      name             = "Build-Frontend"
       category         = "Build"
       owner            = "AWS"
       provider         = "CodeBuild"
@@ -469,10 +486,31 @@ resource "aws_codepipeline" "frontend" {
     }
   }
 
-  # Note: Deployment to S3 is handled in the buildspec post_build phase
-  # The buildspec syncs dist/ contents directly to S3, so no separate deploy stage is needed
+  # Deploy to Staging Stage
+  stage {
+    name = "Deploy-Staging"
 
-  # Approval Stage (optional - can be removed if not needed)
+    action {
+      name            = "Deploy-to-S3-Staging"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      input_artifacts = ["build_output"]
+      version         = "1"
+
+      configuration = {
+        ProjectName = aws_codebuild_project.frontend.name
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "DEPLOY_STAGE"
+            value = "staging"
+          }
+        ])
+      }
+    }
+  }
+
+  # Approval Stage
   stage {
     name = "Approval"
 
@@ -484,7 +522,31 @@ resource "aws_codepipeline" "frontend" {
       version  = "1"
 
       configuration = {
-        CustomData = "Please review the staging deployment and approve for production."
+        CustomData = "Please review the staging deployment at CloudFront and approve for production."
+      }
+    }
+  }
+
+  # Deploy to Production Stage
+  stage {
+    name = "Deploy-Production"
+
+    action {
+      name            = "Deploy-to-S3-Production"
+      category        = "Build"
+      owner           = "AWS"
+      provider        = "CodeBuild"
+      input_artifacts = ["build_output"]
+      version         = "1"
+
+      configuration = {
+        ProjectName = aws_codebuild_project.frontend.name
+        EnvironmentVariables = jsonencode([
+          {
+            name  = "DEPLOY_STAGE"
+            value = "production"
+          }
+        ])
       }
     }
   }
