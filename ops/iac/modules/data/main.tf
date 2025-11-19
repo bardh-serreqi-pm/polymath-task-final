@@ -162,8 +162,9 @@ resource "aws_rds_cluster" "aurora" {
   preferred_maintenance_window = "sun:05:00-sun:07:00"
 
   # Final snapshot on deletion - Critical for DR scenarios
+  # Note: Snapshot name will be auto-generated if cluster is deleted
   skip_final_snapshot       = false
-  final_snapshot_identifier = "${var.project_name}-${var.environment}-final-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+  final_snapshot_identifier = "${var.project_name}-${var.environment}-final-snapshot"
 
   # Copy tags to snapshots for proper tracking
   copy_tags_to_snapshot = true
@@ -190,7 +191,7 @@ resource "aws_rds_cluster" "aurora" {
 
   lifecycle {
     ignore_changes = [
-      final_snapshot_identifier, # Ignore timestamp changes on plan
+      final_snapshot_identifier, # Ignore changes to prevent recreation
     ]
   }
 }

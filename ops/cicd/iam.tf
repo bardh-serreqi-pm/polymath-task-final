@@ -480,7 +480,10 @@ resource "aws_iam_role_policy" "codebuild_terraform_policy" {
           "iam:*",
           "sns:*",
           "secretsmanager:*",
-          "ssm:*"
+          "ssm:*",
+          "backup:*",
+          "backup-storage:*",
+          "kms:*"
         ]
         Resource = "*"
       }
