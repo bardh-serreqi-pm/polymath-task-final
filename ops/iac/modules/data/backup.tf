@@ -80,9 +80,9 @@ resource "aws_backup_plan" "aurora_dr" {
       delete_after = 168 # 7 days retention (168 hours)
     }
 
-    # Enable continuous backups (Point-in-Time Recovery)
-    # Provides even better RPO (~5 minutes for Aurora)
-    enable_continuous_backup = true
+    # Note: Continuous backups disabled for hourly snapshot-based backups
+    # Aurora's native PITR (7-day retention) already provides RPO < 5 minutes
+    # enable_continuous_backup = true
 
     # =========================================================================
     # Cross-Region Copy (DR Region: us-west-2)
@@ -109,17 +109,9 @@ resource "aws_backup_plan" "aurora_dr" {
     completion_window = 120
 
     lifecycle {
-      cold_storage_after = 30 # Move to cold storage after 30 days (cost optimization)
-      delete_after       = 90 # Keep for 90 days total
+      # Note: cold_storage_after removed - Aurora snapshots don't support cold storage
+      delete_after = 90 # Keep for 90 days total
     }
-  }
-
-  # Advanced backup settings
-  advanced_backup_setting {
-    backup_options = {
-      WindowsVSS = "enabled" # For Windows workloads (if applicable)
-    }
-    resource_type = "EC2"
   }
 
   tags = merge(local.common_tags, {
