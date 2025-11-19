@@ -162,8 +162,8 @@ resource "aws_rds_cluster" "aurora" {
   preferred_maintenance_window = "sun:05:00-sun:07:00"
 
   # Final snapshot on deletion - Critical for DR scenarios
-  # Skip snapshot to avoid Terraform errors, but keep identifier for state compatibility
-  skip_final_snapshot       = true
+  # Create snapshot on cluster deletion for data protection
+  skip_final_snapshot       = false
   final_snapshot_identifier = "${var.project_name}-${var.environment}-final-snapshot"
 
   # Copy tags to snapshots for proper tracking
