@@ -5,6 +5,14 @@
 # Target: RPO = 1 hour, RTO = 4 hours
 
 # ============================================================================
+# Data Sources
+# ============================================================================
+
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
+
+# ============================================================================
 # IAM Role for AWS Backup Service
 # ============================================================================
 
@@ -60,6 +68,22 @@ resource "aws_backup_vault" "primary" {
 # }
 
 # ============================================================================
+# Backup Vault (DR Region - us-west-2)
+# ============================================================================
+
+resource "aws_backup_vault" "dr" {
+  provider = aws.us_west_2
+  name     = "${var.project_name}-${var.environment}-dr-vault"
+
+  tags = merge(local.common_tags, {
+    Name                         = "${var.project_name}-${var.environment}-dr-vault"
+    "disaster-recovery:location" = "secondary"
+    "disaster-recovery:region"   = "us-west-2"
+    "disaster-recovery:type"     = "backup-vault"
+  })
+}
+
+# ============================================================================
 # Backup Plan: Hourly Snapshots (RPO = 1 hour)
 # ============================================================================
 
@@ -87,15 +111,13 @@ resource "aws_backup_plan" "aurora_dr" {
     # =========================================================================
     # Cross-Region Copy (DR Region: us-west-2)
     # =========================================================================
-    # Uncomment when DR region infrastructure is deployed:
-    #
-    # copy_action {
-    #   destination_vault_arn = "arn:aws:backup:us-west-2:${data.aws_caller_identity.current.account_id}:backup-vault:${var.project_name}-${var.environment}-dr-vault"
-    #   
-    #   lifecycle {
-    #     delete_after = 168  # Match primary retention
-    #   }
-    # }
+    copy_action {
+      destination_vault_arn = aws_backup_vault.dr.arn
+
+      lifecycle {
+        delete_after = 168 # Match primary retention (7 days)
+      }
+    }
   }
 
   # ============================================================================
@@ -111,6 +133,17 @@ resource "aws_backup_plan" "aurora_dr" {
     lifecycle {
       # Note: cold_storage_after removed - Aurora snapshots don't support cold storage
       delete_after = 90 # Keep for 90 days total
+    }
+
+    # =========================================================================
+    # Cross-Region Copy (DR Region: us-west-2)
+    # =========================================================================
+    copy_action {
+      destination_vault_arn = aws_backup_vault.dr.arn
+
+      lifecycle {
+        delete_after = 90 # Match primary retention (90 days)
+      }
     }
   }
 
@@ -217,6 +250,11 @@ resource "aws_s3_bucket_versioning" "frontend_dr" {
 output "backup_vault_arn" {
   description = "ARN of the primary backup vault"
   value       = aws_backup_vault.primary.arn
+}
+
+output "backup_vault_dr_arn" {
+  description = "ARN of the DR backup vault (us-west-2)"
+  value       = aws_backup_vault.dr.arn
 }
 
 output "backup_plan_id" {

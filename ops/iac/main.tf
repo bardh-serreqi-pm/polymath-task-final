@@ -12,6 +12,11 @@ module "network" {
 module "data" {
   source = "./modules/data"
 
+  providers = {
+    aws            = aws
+    aws.us_west_2  = aws.us_west_2
+  }
+
   project_name         = var.project_name
   environment          = var.environment
   tags                 = var.tags
