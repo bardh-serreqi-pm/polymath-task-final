@@ -1,9 +1,26 @@
+# ============================================================================
+# Data Sources
+# ============================================================================
+
+# Get available availability zones in the current region
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+# ============================================================================
+# Random Resources
+# ============================================================================
+
 # Generate Django secret key if not provided
 # This must be defined before locals block that references it
 resource "random_password" "django_secret_key" {
   length  = 50
   special = true
 }
+
+# ============================================================================
+# Local Values
+# ============================================================================
 
 locals {
   common_tags = merge(
