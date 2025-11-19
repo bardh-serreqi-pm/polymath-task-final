@@ -144,8 +144,6 @@ resource "aws_rds_cluster" "aurora" {
   # ============================================================================
   # HIGH AVAILABILITY: Multi-AZ Configuration
   # ============================================================================
-  # Spans 2+ availability zones for automatic failover (1-2 min RTO)
-  # Provides protection against AZ-level failures
   availability_zones = slice(data.aws_availability_zones.available.names, 0, 2)
 
   # Security
@@ -157,7 +155,7 @@ resource "aws_rds_cluster" "aurora" {
   # ============================================================================
   # Automated backups - Point-in-Time Recovery (PITR)
   # Continuous backup to S3, enables restore to any point within retention period
-  backup_retention_period      = 7 # Increased from 3 to 7 days for better DR
+  backup_retention_period      = 7
   preferred_backup_window      = "03:00-05:00"
   preferred_maintenance_window = "sun:05:00-sun:07:00"
 
@@ -169,7 +167,6 @@ resource "aws_rds_cluster" "aurora" {
   # Copy tags to snapshots for proper tracking
   copy_tags_to_snapshot = true
 
-  # CloudWatch logs for monitoring and audit trail
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
   allow_major_version_upgrade = false
