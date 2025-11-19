@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from Users import views as user_views
 from habit import views as habit_views
 from habit.health import (
@@ -49,11 +51,11 @@ urlpatterns = [
     path('api/analysis/', AnalysisView.as_view(), name='api-analysis'),
     
     path('admin/', admin.site.urls),
-    # Django auth views with CSRF protection
-    path('Login/', auth_views.LoginView.as_view(template_name='Users/login.html'), name='login'),
-    path('Register/', user_views.register, name='register'),
+    # Django auth views - CSRF exempt for React SPA
+    path('Login/', method_decorator(csrf_exempt, name='dispatch')(auth_views.LoginView).as_view(template_name='Users/login.html'), name='login'),
+    path('Register/', csrf_exempt(user_views.register), name='register'),
     path('Profile/', user_views.profile, name='profile'),
-    path('Logout/', auth_views.LogoutView.as_view(template_name='Users/logout.html'), name='logout'),
+    path('Logout/', method_decorator(csrf_exempt, name='dispatch')(auth_views.LogoutView).as_view(template_name='Users/logout.html'), name='logout'),
 
     path('', habit_views.HabitView.as_view(), name='habit-home'),
 
