@@ -114,29 +114,68 @@ data "aws_rds_engine_version" "aurora_postgresql" {
 }
 
 resource "aws_rds_cluster" "aurora" {
-  engine                       = "aurora-postgresql"
-  engine_mode                  = "provisioned"
-  engine_version               = data.aws_rds_engine_version.aurora_postgresql.version
-  database_name                = var.db_name
-  master_username              = var.db_master_username
-  master_password              = random_password.aurora_master.result
-  port                         = 5432 # PostgreSQL default port
-  db_subnet_group_name         = aws_db_subnet_group.aurora.name
-  vpc_security_group_ids       = [aws_security_group.aurora.id]
-  storage_encrypted            = true
-  deletion_protection          = false
-  backup_retention_period      = 3
+  engine                 = "aurora-postgresql"
+  engine_mode            = "provisioned"
+  engine_version         = data.aws_rds_engine_version.aurora_postgresql.version
+  database_name          = var.db_name
+  master_username        = var.db_master_username
+  master_password        = random_password.aurora_master.result
+  port                   = 5432 # PostgreSQL default port
+  db_subnet_group_name   = aws_db_subnet_group.aurora.name
+  vpc_security_group_ids = [aws_security_group.aurora.id]
+
+  # ============================================================================
+  # HIGH AVAILABILITY: Multi-AZ Configuration
+  # ============================================================================
+  # Spans 2+ availability zones for automatic failover (1-2 min RTO)
+  # Provides protection against AZ-level failures
+  availability_zones = slice(data.aws_availability_zones.available.names, 0, 2)
+
+  # Security
+  storage_encrypted   = true
+  deletion_protection = false # Set to true for production
+
+  # ============================================================================
+  # DISASTER RECOVERY: Pilot Light Strategy (RTO=4h, RPO=1h)
+  # ============================================================================
+  # Automated backups - Point-in-Time Recovery (PITR)
+  # Continuous backup to S3, enables restore to any point within retention period
+  backup_retention_period      = 7 # Increased from 3 to 7 days for better DR
   preferred_backup_window      = "03:00-05:00"
   preferred_maintenance_window = "sun:05:00-sun:07:00"
-  copy_tags_to_snapshot        = true
-  allow_major_version_upgrade  = false
-  apply_immediately            = true
+
+  # Final snapshot on deletion - Critical for DR scenarios
+  skip_final_snapshot       = false
+  final_snapshot_identifier = "${var.project_name}-${var.environment}-final-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+
+  # Copy tags to snapshots for proper tracking
+  copy_tags_to_snapshot = true
+
+  # CloudWatch logs for monitoring and audit trail
+  enabled_cloudwatch_logs_exports = ["postgresql"]
+
+  allow_major_version_upgrade = false
+  apply_immediately           = true
+
   serverlessv2_scaling_configuration {
     min_capacity = var.aurora_min_capacity
     max_capacity = var.aurora_max_capacity
   }
 
-  tags = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-aurora-cluster" })
+  tags = merge(local.common_tags, {
+    Name                         = "${var.project_name}-${var.environment}-aurora-cluster",
+    "disaster-recovery:strategy" = "pilot-light",
+    "disaster-recovery:rto"      = "4h",
+    "disaster-recovery:rpo"      = "1h",
+    "backup:automated"           = "true",
+    "backup:retention-days"      = "7"
+  })
+
+  lifecycle {
+    ignore_changes = [
+      final_snapshot_identifier, # Ignore timestamp changes on plan
+    ]
+  }
 }
 
 resource "aws_rds_cluster_instance" "aurora" {
@@ -157,8 +196,10 @@ resource "aws_elasticache_serverless_cache" "redis" {
   engine               = "redis"
   major_engine_version = "7"
   description          = "Serverless Redis cache for ${var.project_name}-${var.environment}"
-  subnet_ids           = var.private_subnet_ids
-  security_group_ids   = [aws_security_group.redis.id]
+
+  # Multi-AZ: Redis Serverless automatically spans multiple AZs for HA
+  subnet_ids         = var.private_subnet_ids
+  security_group_ids = [aws_security_group.redis.id]
 
   cache_usage_limits {
     data_storage {
@@ -166,12 +207,16 @@ resource "aws_elasticache_serverless_cache" "redis" {
       minimum = 1
       maximum = 10
     }
-
   }
 
+  # Snapshot for DR (ephemeral cache, can be rebuilt from application)
   snapshot_retention_limit = 1
 
-  tags = merge(local.common_tags, { Name = "${var.project_name}-${var.environment}-redis" })
+  tags = merge(local.common_tags, {
+    Name                         = "${var.project_name}-${var.environment}-redis",
+    "disaster-recovery:strategy" = "pilot-light",
+    "disaster-recovery:note"     = "ephemeral-cache-rebuilt-on-failover"
+  })
 }
 
 resource "aws_ssm_parameter" "aurora_writer_endpoint" {
