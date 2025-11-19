@@ -30,90 +30,226 @@ resource "aws_sns_topic_subscription" "pipeline_email" {
 }
 
 # ============================================================================
-# CodeStar Notifications for Terraform Pipeline
+# EventBridge Rules for Custom Formatted Notifications
 # ============================================================================
+# These rules provide readable, well-formatted email notifications
+# Replaces CodeStar Notifications for better email formatting
 
-resource "aws_codestarnotifications_notification_rule" "terraform_pipeline" {
-  name        = "${var.project_name}-terraform-pipeline-notifications-${var.environment}"
-  detail_type = "FULL"
-  resource    = aws_codepipeline.terraform.arn
+# ----------------------------------------------------------------------------
+# Pipeline Success Notifications
+# ----------------------------------------------------------------------------
 
-  # Events to notify on
-  event_type_ids = [
-    "codepipeline-pipeline-pipeline-execution-succeeded", # Pipeline completed successfully
-    "codepipeline-pipeline-pipeline-execution-failed",    # Pipeline failed
-  ]
+resource "aws_cloudwatch_event_rule" "terraform_success" {
+  name        = "${var.project_name}-terraform-success-${var.environment}"
+  description = "Notify when Terraform pipeline completes successfully"
 
-  target {
-    address = aws_sns_topic.pipeline_notifications.arn
-    type    = "SNS"
-  }
+  event_pattern = jsonencode({
+    source      = ["aws.codepipeline"]
+    detail-type = ["CodePipeline Pipeline Execution State Change"]
+    detail = {
+      state    = ["SUCCEEDED"]
+      pipeline = ["${var.project_name}-terraform-pipeline-${var.environment}"]
+    }
+  })
 
   tags = {
-    Name        = "${var.project_name}-terraform-notifications"
+    Name        = "${var.project_name}-terraform-success-rule"
     Environment = var.environment
-    Pipeline    = "Terraform"
   }
 }
 
-# ============================================================================
-# CodeStar Notifications for Backend Pipeline
-# ============================================================================
+resource "aws_cloudwatch_event_target" "terraform_success_sns" {
+  rule      = aws_cloudwatch_event_rule.terraform_success.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.pipeline_notifications.arn
 
-resource "aws_codestarnotifications_notification_rule" "backend_pipeline" {
-  name        = "${var.project_name}-backend-pipeline-notifications-${var.environment}"
-  detail_type = "FULL"
-  resource    = aws_codepipeline.backend.arn
-
-  # Events to notify on
-  event_type_ids = [
-    "codepipeline-pipeline-pipeline-execution-succeeded", # Pipeline completed successfully
-    "codepipeline-pipeline-pipeline-execution-failed",    # Pipeline failed
-  ]
-
-  target {
-    address = aws_sns_topic.pipeline_notifications.arn
-    type    = "SNS"
-  }
-
-  tags = {
-    Name        = "${var.project_name}-backend-notifications"
-    Environment = var.environment
-    Pipeline    = "Backend"
+  input_transformer {
+    input_paths = {
+      pipeline  = "$.detail.pipeline"
+      execution = "$.detail.execution-id"
+      time      = "$.time"
+    }
+    input_template = "\"SUCCESS: Terraform Pipeline Completed\\n\\nPipeline: <pipeline>\\nStatus: SUCCEEDED\\nExecution ID: <execution>\\nTime: <time>\\n\\nInfrastructure changes have been successfully applied.\\n\\nView in Console: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/view\""
   }
 }
 
-# ============================================================================
-# CodeStar Notifications for Frontend Pipeline
-# ============================================================================
+resource "aws_cloudwatch_event_rule" "backend_success" {
+  name        = "${var.project_name}-backend-success-${var.environment}"
+  description = "Notify when Backend pipeline completes successfully"
 
-resource "aws_codestarnotifications_notification_rule" "frontend_pipeline" {
-  name        = "${var.project_name}-frontend-pipeline-notifications-${var.environment}"
-  detail_type = "FULL"
-  resource    = aws_codepipeline.frontend.arn
-
-  # Events to notify on
-  event_type_ids = [
-    "codepipeline-pipeline-pipeline-execution-succeeded", # Pipeline completed successfully
-    "codepipeline-pipeline-pipeline-execution-failed",    # Pipeline failed
-  ]
-
-  target {
-    address = aws_sns_topic.pipeline_notifications.arn
-    type    = "SNS"
-  }
+  event_pattern = jsonencode({
+    source      = ["aws.codepipeline"]
+    detail-type = ["CodePipeline Pipeline Execution State Change"]
+    detail = {
+      state    = ["SUCCEEDED"]
+      pipeline = ["${var.project_name}-backend-pipeline-${var.environment}"]
+    }
+  })
 
   tags = {
-    Name        = "${var.project_name}-frontend-notifications"
+    Name        = "${var.project_name}-backend-success-rule"
     Environment = var.environment
-    Pipeline    = "Frontend"
   }
 }
 
-# ============================================================================
-# EventBridge Rules for Approval Stage Notifications
-# ============================================================================
-# These rules specifically watch for Approval stage starts (not all stages)
+resource "aws_cloudwatch_event_target" "backend_success_sns" {
+  rule      = aws_cloudwatch_event_rule.backend_success.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.pipeline_notifications.arn
+
+  input_transformer {
+    input_paths = {
+      pipeline  = "$.detail.pipeline"
+      execution = "$.detail.execution-id"
+      time      = "$.time"
+    }
+    input_template = "\"SUCCESS: Backend API Deployed\\n\\nPipeline: <pipeline>\\nStatus: SUCCEEDED\\nExecution ID: <execution>\\nTime: <time>\\n\\nBackend API has been successfully deployed to production.\\n\\nView in Console: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/view\""
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "frontend_success" {
+  name        = "${var.project_name}-frontend-success-${var.environment}"
+  description = "Notify when Frontend pipeline completes successfully"
+
+  event_pattern = jsonencode({
+    source      = ["aws.codepipeline"]
+    detail-type = ["CodePipeline Pipeline Execution State Change"]
+    detail = {
+      state    = ["SUCCEEDED"]
+      pipeline = ["${var.project_name}-frontend-pipeline-${var.environment}"]
+    }
+  })
+
+  tags = {
+    Name        = "${var.project_name}-frontend-success-rule"
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_event_target" "frontend_success_sns" {
+  rule      = aws_cloudwatch_event_rule.frontend_success.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.pipeline_notifications.arn
+
+  input_transformer {
+    input_paths = {
+      pipeline  = "$.detail.pipeline"
+      execution = "$.detail.execution-id"
+      time      = "$.time"
+    }
+    input_template = "\"SUCCESS: Frontend Application Deployed\\n\\nPipeline: <pipeline>\\nStatus: SUCCEEDED\\nExecution ID: <execution>\\nTime: <time>\\n\\nFrontend application has been successfully deployed.\\n\\nView in Console: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/view\""
+  }
+}
+
+# ----------------------------------------------------------------------------
+# Pipeline Failure Notifications
+# ----------------------------------------------------------------------------
+
+resource "aws_cloudwatch_event_rule" "terraform_failure" {
+  name        = "${var.project_name}-terraform-failure-${var.environment}"
+  description = "Notify when Terraform pipeline fails"
+
+  event_pattern = jsonencode({
+    source      = ["aws.codepipeline"]
+    detail-type = ["CodePipeline Pipeline Execution State Change"]
+    detail = {
+      state    = ["FAILED"]
+      pipeline = ["${var.project_name}-terraform-pipeline-${var.environment}"]
+    }
+  })
+
+  tags = {
+    Name        = "${var.project_name}-terraform-failure-rule"
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_event_target" "terraform_failure_sns" {
+  rule      = aws_cloudwatch_event_rule.terraform_failure.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.pipeline_notifications.arn
+
+  input_transformer {
+    input_paths = {
+      pipeline  = "$.detail.pipeline"
+      execution = "$.detail.execution-id"
+      time      = "$.time"
+    }
+    input_template = "\"FAILURE: Terraform Pipeline Failed\\n\\nPipeline: <pipeline>\\nStatus: FAILED\\nExecution ID: <execution>\\nTime: <time>\\n\\nInfrastructure deployment has failed. Please check the logs for details.\\n\\nView in Console: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/view\\nView Logs: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/executions/<execution>/timeline\""
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "backend_failure" {
+  name        = "${var.project_name}-backend-failure-${var.environment}"
+  description = "Notify when Backend pipeline fails"
+
+  event_pattern = jsonencode({
+    source      = ["aws.codepipeline"]
+    detail-type = ["CodePipeline Pipeline Execution State Change"]
+    detail = {
+      state    = ["FAILED"]
+      pipeline = ["${var.project_name}-backend-pipeline-${var.environment}"]
+    }
+  })
+
+  tags = {
+    Name        = "${var.project_name}-backend-failure-rule"
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_event_target" "backend_failure_sns" {
+  rule      = aws_cloudwatch_event_rule.backend_failure.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.pipeline_notifications.arn
+
+  input_transformer {
+    input_paths = {
+      pipeline  = "$.detail.pipeline"
+      execution = "$.detail.execution-id"
+      time      = "$.time"
+    }
+    input_template = "\"FAILURE: Backend API Deployment Failed\\n\\nPipeline: <pipeline>\\nStatus: FAILED\\nExecution ID: <execution>\\nTime: <time>\\n\\nBackend API deployment has failed. Please investigate immediately.\\n\\nView in Console: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/view\\nView Logs: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/executions/<execution>/timeline\""
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "frontend_failure" {
+  name        = "${var.project_name}-frontend-failure-${var.environment}"
+  description = "Notify when Frontend pipeline fails"
+
+  event_pattern = jsonencode({
+    source      = ["aws.codepipeline"]
+    detail-type = ["CodePipeline Pipeline Execution State Change"]
+    detail = {
+      state    = ["FAILED"]
+      pipeline = ["${var.project_name}-frontend-pipeline-${var.environment}"]
+    }
+  })
+
+  tags = {
+    Name        = "${var.project_name}-frontend-failure-rule"
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_event_target" "frontend_failure_sns" {
+  rule      = aws_cloudwatch_event_rule.frontend_failure.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.pipeline_notifications.arn
+
+  input_transformer {
+    input_paths = {
+      pipeline  = "$.detail.pipeline"
+      execution = "$.detail.execution-id"
+      time      = "$.time"
+    }
+    input_template = "\"FAILURE: Frontend Deployment Failed\\n\\nPipeline: <pipeline>\\nStatus: FAILED\\nExecution ID: <execution>\\nTime: <time>\\n\\nFrontend deployment has failed. Please check the build logs.\\n\\nView in Console: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/view\\nView Logs: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/executions/<execution>/timeline\""
+  }
+}
+
+# ----------------------------------------------------------------------------
+# Approval Stage Notifications
+# ----------------------------------------------------------------------------
 
 resource "aws_cloudwatch_event_rule" "terraform_approval" {
   name        = "${var.project_name}-terraform-approval-${var.environment}"
@@ -146,7 +282,7 @@ resource "aws_cloudwatch_event_target" "terraform_approval_sns" {
       stage     = "$.detail.stage"
       execution = "$.detail.execution-id"
     }
-    input_template = "\"⚠️ APPROVAL REQUIRED: Pipeline '<pipeline>' has reached the '<stage>' stage and requires manual approval. Execution ID: <execution>\""
+    input_template = "\"APPROVAL REQUIRED: Terraform Infrastructure Changes\\n\\nPipeline: <pipeline>\\nStage: <stage>\\nStatus: WAITING FOR APPROVAL\\nExecution ID: <execution>\\n\\nACTION REQUIRED: Please review and approve the infrastructure changes.\\n\\nApprove/Reject: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/view\""
   }
 }
 
@@ -181,7 +317,7 @@ resource "aws_cloudwatch_event_target" "backend_approval_sns" {
       stage     = "$.detail.stage"
       execution = "$.detail.execution-id"
     }
-    input_template = "\"⚠️ APPROVAL REQUIRED: Pipeline '<pipeline>' has reached the '<stage>' stage and requires manual approval. Execution ID: <execution>\""
+    input_template = "\"APPROVAL REQUIRED: Backend API Production Deployment\\n\\nPipeline: <pipeline>\\nStage: <stage>\\nStatus: WAITING FOR APPROVAL\\nExecution ID: <execution>\\n\\nACTION REQUIRED: Please review staging deployment and approve production release.\\n\\nApprove/Reject: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/view\""
   }
 }
 
@@ -216,7 +352,7 @@ resource "aws_cloudwatch_event_target" "frontend_approval_sns" {
       stage     = "$.detail.stage"
       execution = "$.detail.execution-id"
     }
-    input_template = "\"⚠️ APPROVAL REQUIRED: Pipeline '<pipeline>' has reached the '<stage>' stage and requires manual approval. Execution ID: <execution>\""
+    input_template = "\"APPROVAL REQUIRED: Frontend Production Deployment\\n\\nPipeline: <pipeline>\\nStage: <stage>\\nStatus: WAITING FOR APPROVAL\\nExecution ID: <execution>\\n\\nACTION REQUIRED: Please review staging deployment and approve production release.\\n\\nApprove/Reject: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/<pipeline>/view\""
   }
 }
 
@@ -230,17 +366,6 @@ resource "aws_sns_topic_policy" "pipeline_notifications" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      {
-        Sid    = "AllowCodeStarNotifications"
-        Effect = "Allow"
-        Principal = {
-          Service = "codestar-notifications.amazonaws.com"
-        }
-        Action = [
-          "SNS:Publish"
-        ]
-        Resource = aws_sns_topic.pipeline_notifications.arn
-      },
       {
         Sid    = "AllowEventBridge"
         Effect = "Allow"
@@ -292,4 +417,5 @@ output "pipeline_notifications_topic_name" {
   description = "Name of the SNS topic for pipeline notifications"
   value       = aws_sns_topic.pipeline_notifications.name
 }
+
 

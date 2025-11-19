@@ -2,11 +2,6 @@
 # Data Sources
 # ============================================================================
 
-# Get available availability zones in the current region
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
 # ============================================================================
 # Random Resources
 # ============================================================================
@@ -144,7 +139,8 @@ resource "aws_rds_cluster" "aurora" {
   # ============================================================================
   # HIGH AVAILABILITY: Multi-AZ Configuration
   # ============================================================================
-  availability_zones = slice(data.aws_availability_zones.available.names, 0, 2)
+  # Pinned to specific AZs to prevent cluster replacement on AZ list changes
+  availability_zones = ["us-east-1a", "us-east-1b"]
 
   # Security
   storage_encrypted   = true
