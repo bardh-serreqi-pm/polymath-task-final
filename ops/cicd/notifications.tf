@@ -40,11 +40,8 @@ resource "aws_codestarnotifications_notification_rule" "terraform_pipeline" {
 
   # Events to notify on
   event_type_ids = [
-    "codepipeline-pipeline-action-execution-succeeded", # Pipeline succeeded
-    "codepipeline-pipeline-action-execution-failed",    # Pipeline failed
-    "codepipeline-pipeline-stage-execution-started",    # Stage started (includes approval)
-    "codepipeline-pipeline-pipeline-execution-succeeded",
-    "codepipeline-pipeline-pipeline-execution-failed",
+    "codepipeline-pipeline-pipeline-execution-succeeded", # Pipeline completed successfully
+    "codepipeline-pipeline-pipeline-execution-failed",    # Pipeline failed
   ]
 
   target {
@@ -70,11 +67,8 @@ resource "aws_codestarnotifications_notification_rule" "backend_pipeline" {
 
   # Events to notify on
   event_type_ids = [
-    "codepipeline-pipeline-action-execution-succeeded",
-    "codepipeline-pipeline-action-execution-failed",
-    "codepipeline-pipeline-stage-execution-started",
-    "codepipeline-pipeline-pipeline-execution-succeeded",
-    "codepipeline-pipeline-pipeline-execution-failed",
+    "codepipeline-pipeline-pipeline-execution-succeeded", # Pipeline completed successfully
+    "codepipeline-pipeline-pipeline-execution-failed",    # Pipeline failed
   ]
 
   target {
@@ -100,11 +94,8 @@ resource "aws_codestarnotifications_notification_rule" "frontend_pipeline" {
 
   # Events to notify on
   event_type_ids = [
-    "codepipeline-pipeline-action-execution-succeeded",
-    "codepipeline-pipeline-action-execution-failed",
-    "codepipeline-pipeline-stage-execution-started",
-    "codepipeline-pipeline-pipeline-execution-succeeded",
-    "codepipeline-pipeline-pipeline-execution-failed",
+    "codepipeline-pipeline-pipeline-execution-succeeded", # Pipeline completed successfully
+    "codepipeline-pipeline-pipeline-execution-failed",    # Pipeline failed
   ]
 
   target {
@@ -116,6 +107,116 @@ resource "aws_codestarnotifications_notification_rule" "frontend_pipeline" {
     Name        = "${var.project_name}-frontend-notifications"
     Environment = var.environment
     Pipeline    = "Frontend"
+  }
+}
+
+# ============================================================================
+# EventBridge Rules for Approval Stage Notifications
+# ============================================================================
+# These rules specifically watch for Approval stage starts (not all stages)
+
+resource "aws_cloudwatch_event_rule" "terraform_approval" {
+  name        = "${var.project_name}-terraform-approval-${var.environment}"
+  description = "Notify when Terraform pipeline reaches approval stage"
+
+  event_pattern = jsonencode({
+    source      = ["aws.codepipeline"]
+    detail-type = ["CodePipeline Stage Execution State Change"]
+    detail = {
+      state    = ["STARTED"]
+      stage    = ["Approval"]
+      pipeline = ["${var.project_name}-terraform-pipeline-${var.environment}"]
+    }
+  })
+
+  tags = {
+    Name        = "${var.project_name}-terraform-approval-rule"
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_event_target" "terraform_approval_sns" {
+  rule      = aws_cloudwatch_event_rule.terraform_approval.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.pipeline_notifications.arn
+
+  input_transformer {
+    input_paths = {
+      pipeline  = "$.detail.pipeline"
+      stage     = "$.detail.stage"
+      execution = "$.detail.execution-id"
+    }
+    input_template = "\"⚠️ APPROVAL REQUIRED: Pipeline '<pipeline>' has reached the '<stage>' stage and requires manual approval. Execution ID: <execution>\""
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "backend_approval" {
+  name        = "${var.project_name}-backend-approval-${var.environment}"
+  description = "Notify when Backend pipeline reaches approval stage"
+
+  event_pattern = jsonencode({
+    source      = ["aws.codepipeline"]
+    detail-type = ["CodePipeline Stage Execution State Change"]
+    detail = {
+      state    = ["STARTED"]
+      stage    = ["Approval"]
+      pipeline = ["${var.project_name}-backend-pipeline-${var.environment}"]
+    }
+  })
+
+  tags = {
+    Name        = "${var.project_name}-backend-approval-rule"
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_event_target" "backend_approval_sns" {
+  rule      = aws_cloudwatch_event_rule.backend_approval.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.pipeline_notifications.arn
+
+  input_transformer {
+    input_paths = {
+      pipeline  = "$.detail.pipeline"
+      stage     = "$.detail.stage"
+      execution = "$.detail.execution-id"
+    }
+    input_template = "\"⚠️ APPROVAL REQUIRED: Pipeline '<pipeline>' has reached the '<stage>' stage and requires manual approval. Execution ID: <execution>\""
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "frontend_approval" {
+  name        = "${var.project_name}-frontend-approval-${var.environment}"
+  description = "Notify when Frontend pipeline reaches approval stage"
+
+  event_pattern = jsonencode({
+    source      = ["aws.codepipeline"]
+    detail-type = ["CodePipeline Stage Execution State Change"]
+    detail = {
+      state    = ["STARTED"]
+      stage    = ["Approval"]
+      pipeline = ["${var.project_name}-frontend-pipeline-${var.environment}"]
+    }
+  })
+
+  tags = {
+    Name        = "${var.project_name}-frontend-approval-rule"
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_event_target" "frontend_approval_sns" {
+  rule      = aws_cloudwatch_event_rule.frontend_approval.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.pipeline_notifications.arn
+
+  input_transformer {
+    input_paths = {
+      pipeline  = "$.detail.pipeline"
+      stage     = "$.detail.stage"
+      execution = "$.detail.execution-id"
+    }
+    input_template = "\"⚠️ APPROVAL REQUIRED: Pipeline '<pipeline>' has reached the '<stage>' stage and requires manual approval. Execution ID: <execution>\""
   }
 }
 
@@ -134,6 +235,17 @@ resource "aws_sns_topic_policy" "pipeline_notifications" {
         Effect = "Allow"
         Principal = {
           Service = "codestar-notifications.amazonaws.com"
+        }
+        Action = [
+          "SNS:Publish"
+        ]
+        Resource = aws_sns_topic.pipeline_notifications.arn
+      },
+      {
+        Sid    = "AllowEventBridge"
+        Effect = "Allow"
+        Principal = {
+          Service = "events.amazonaws.com"
         }
         Action = [
           "SNS:Publish"
