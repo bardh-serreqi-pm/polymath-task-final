@@ -14,12 +14,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from Users import views as user_views
 from habit import views as habit_views
 from habit.health import (
-    HealthCheckView, LoginAPIView, LogoutAPIView, AuthCheckView, ProfileView, HabitsView, TasksView,
+    HealthCheckView, AuthCheckView, ProfileView, HabitsView, TasksView,
     HabitDetailView, CompleteTaskView, DeleteHabitView, AnalysisView
 )
 from django.conf import settings
@@ -31,10 +33,6 @@ from django.conf.urls.static import static
 urlpatterns = [
     # Health check endpoint
     path('health/', HealthCheckView.as_view(), name='health-check'),
-    # Login API endpoint (CSRF exempt for React SPA)
-    path('Login/', LoginAPIView.as_view(), name='api-login'),
-    # Logout API endpoint (CSRF exempt for React SPA)
-    path('Logout/', LogoutAPIView.as_view(), name='api-logout'),
     # Authentication check endpoint
     path('api/auth/check/', AuthCheckView.as_view(), name='auth-check'),
     # Profile API endpoint
@@ -53,9 +51,11 @@ urlpatterns = [
     path('api/analysis/', AnalysisView.as_view(), name='api-analysis'),
     
     path('admin/', admin.site.urls),
-    # Django template-based views for backwards compatibility
+    # CSRF exempt for login/register/logout - React SPA doesn't handle CSRF tokens before authentication
+    path('Login/', method_decorator(csrf_exempt, name='dispatch')(auth_views.LoginView).as_view(template_name='Users/login.html'), name='login'),
     path('Register/', user_views.register, name='register'),
     path('Profile/', user_views.profile, name='profile'),
+    path('Logout/', method_decorator(csrf_exempt, name='dispatch')(auth_views.LogoutView).as_view(template_name='Users/logout.html'), name='logout'),
 
     path('', habit_views.HabitView.as_view(), name='habit-home'),
 
