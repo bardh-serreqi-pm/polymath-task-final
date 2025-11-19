@@ -85,6 +85,12 @@ variable "frontend_domain_name" {
   default     = ""
 }
 
+variable "notification_email" {
+  description = "Email address for CI/CD pipeline notifications (approval requests, pipeline completion)"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)

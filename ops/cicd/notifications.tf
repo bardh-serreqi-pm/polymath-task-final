@@ -1,0 +1,183 @@
+# ============================================================================
+# CI/CD PIPELINE NOTIFICATIONS
+# ============================================================================
+# SNS topic and notifications for pipeline events (approval required, completion)
+
+# ============================================================================
+# SNS Topic for Pipeline Notifications
+# ============================================================================
+# Note: AWS CodeStar Notifications service-linked role already exists in the account
+# (AWSServiceRoleForCodeStarNotifications) and is used automatically
+
+resource "aws_sns_topic" "pipeline_notifications" {
+  name         = "${var.project_name}-${var.environment}-pipeline-notifications"
+  display_name = "CI/CD Pipeline Notifications - ${var.project_name}"
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-pipeline-notifications"
+    Environment = var.environment
+    Project     = var.project_name
+    Purpose     = "CI/CD Pipeline Notifications"
+  }
+}
+
+# Email Subscription for Pipeline Notifications
+resource "aws_sns_topic_subscription" "pipeline_email" {
+  count     = var.notification_email != "" ? 1 : 0
+  topic_arn = aws_sns_topic.pipeline_notifications.arn
+  protocol  = "email"
+  endpoint  = var.notification_email
+}
+
+# ============================================================================
+# CodeStar Notifications for Terraform Pipeline
+# ============================================================================
+
+resource "aws_codestarnotifications_notification_rule" "terraform_pipeline" {
+  name        = "${var.project_name}-terraform-pipeline-notifications-${var.environment}"
+  detail_type = "FULL"
+  resource    = aws_codepipeline.terraform.arn
+
+  # Events to notify on
+  event_type_ids = [
+    "codepipeline-pipeline-action-execution-succeeded", # Pipeline succeeded
+    "codepipeline-pipeline-action-execution-failed",    # Pipeline failed
+    "codepipeline-pipeline-stage-execution-started",    # Stage started (includes approval)
+    "codepipeline-pipeline-pipeline-execution-succeeded",
+    "codepipeline-pipeline-pipeline-execution-failed",
+  ]
+
+  target {
+    address = aws_sns_topic.pipeline_notifications.arn
+    type    = "SNS"
+  }
+
+  tags = {
+    Name        = "${var.project_name}-terraform-notifications"
+    Environment = var.environment
+    Pipeline    = "Terraform"
+  }
+}
+
+# ============================================================================
+# CodeStar Notifications for Backend Pipeline
+# ============================================================================
+
+resource "aws_codestarnotifications_notification_rule" "backend_pipeline" {
+  name        = "${var.project_name}-backend-pipeline-notifications-${var.environment}"
+  detail_type = "FULL"
+  resource    = aws_codepipeline.backend.arn
+
+  # Events to notify on
+  event_type_ids = [
+    "codepipeline-pipeline-action-execution-succeeded",
+    "codepipeline-pipeline-action-execution-failed",
+    "codepipeline-pipeline-stage-execution-started",
+    "codepipeline-pipeline-pipeline-execution-succeeded",
+    "codepipeline-pipeline-pipeline-execution-failed",
+  ]
+
+  target {
+    address = aws_sns_topic.pipeline_notifications.arn
+    type    = "SNS"
+  }
+
+  tags = {
+    Name        = "${var.project_name}-backend-notifications"
+    Environment = var.environment
+    Pipeline    = "Backend"
+  }
+}
+
+# ============================================================================
+# CodeStar Notifications for Frontend Pipeline
+# ============================================================================
+
+resource "aws_codestarnotifications_notification_rule" "frontend_pipeline" {
+  name        = "${var.project_name}-frontend-pipeline-notifications-${var.environment}"
+  detail_type = "FULL"
+  resource    = aws_codepipeline.frontend.arn
+
+  # Events to notify on
+  event_type_ids = [
+    "codepipeline-pipeline-action-execution-succeeded",
+    "codepipeline-pipeline-action-execution-failed",
+    "codepipeline-pipeline-stage-execution-started",
+    "codepipeline-pipeline-pipeline-execution-succeeded",
+    "codepipeline-pipeline-pipeline-execution-failed",
+  ]
+
+  target {
+    address = aws_sns_topic.pipeline_notifications.arn
+    type    = "SNS"
+  }
+
+  tags = {
+    Name        = "${var.project_name}-frontend-notifications"
+    Environment = var.environment
+    Pipeline    = "Frontend"
+  }
+}
+
+# ============================================================================
+# SNS Topic Policy for CodeStar Notifications
+# ============================================================================
+
+resource "aws_sns_topic_policy" "pipeline_notifications" {
+  arn = aws_sns_topic.pipeline_notifications.arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCodeStarNotifications"
+        Effect = "Allow"
+        Principal = {
+          Service = "codestar-notifications.amazonaws.com"
+        }
+        Action = [
+          "SNS:Publish"
+        ]
+        Resource = aws_sns_topic.pipeline_notifications.arn
+      },
+      {
+        Sid    = "AllowAccountAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = "*"
+        }
+        Action = [
+          "SNS:GetTopicAttributes",
+          "SNS:SetTopicAttributes",
+          "SNS:AddPermission",
+          "SNS:RemovePermission",
+          "SNS:DeleteTopic",
+          "SNS:Subscribe",
+          "SNS:ListSubscriptionsByTopic",
+          "SNS:Publish"
+        ]
+        Resource = aws_sns_topic.pipeline_notifications.arn
+        Condition = {
+          StringEquals = {
+            "AWS:SourceOwner" = data.aws_caller_identity.current.account_id
+          }
+        }
+      }
+    ]
+  })
+}
+
+# ============================================================================
+# Outputs
+# ============================================================================
+
+output "pipeline_notifications_topic_arn" {
+  description = "ARN of the SNS topic for pipeline notifications"
+  value       = aws_sns_topic.pipeline_notifications.arn
+}
+
+output "pipeline_notifications_topic_name" {
+  description = "Name of the SNS topic for pipeline notifications"
+  value       = aws_sns_topic.pipeline_notifications.name
+}
+
