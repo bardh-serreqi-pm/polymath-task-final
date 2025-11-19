@@ -1,3 +1,8 @@
+output "aurora_cluster_id" {
+  description = "ID/identifier of the Aurora Serverless cluster."
+  value       = aws_rds_cluster.aurora.id
+}
+
 output "aurora_cluster_arn" {
   description = "ARN of the Aurora Serverless cluster."
   value       = aws_rds_cluster.aurora.arn
@@ -21,6 +26,11 @@ output "aurora_reader_endpoint" {
 output "aurora_security_group_id" {
   description = "Security group ID protecting Aurora."
   value       = aws_security_group.aurora.id
+}
+
+output "redis_cluster_id" {
+  description = "ID of the Redis serverless cache cluster."
+  value       = aws_elasticache_serverless_cache.redis.id
 }
 
 output "redis_endpoint" {

@@ -72,5 +72,9 @@ module "observability" {
   tags                   = var.tags
   api_gateway_id         = module.compute.api_gateway_id
   api_gateway_stage_name = module.compute.api_gateway_stage_name
+  lambda_function_name   = module.compute.lambda_function_name
+  aurora_cluster_id      = module.data.aurora_cluster_id
+  redis_cluster_id       = module.data.redis_cluster_id
+  alert_email            = var.alert_email
 }
 

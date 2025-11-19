@@ -61,3 +61,14 @@ tags = {
   Owner       = "Bardh Serreqi"
 }
 
+# ============================================================================
+# Monitoring & Alerting Configuration
+# ============================================================================
+# Email address for CloudWatch alarm notifications (receives alarms via SNS)
+# Leave empty if you don't want email notifications
+# You will need to confirm the subscription via email after deployment
+alert_email = "bardh.serreqi@polymath.services"  # Example: "your-email@example.com"
+
+# API Gateway stage name (for monitoring metrics)
+api_gateway_stage_name = "staging"
+

@@ -24,4 +24,25 @@ variable "api_gateway_stage_name" {
   type        = string
 }
 
+variable "lambda_function_name" {
+  description = "Name of the Lambda function for monitoring."
+  type        = string
+}
+
+variable "aurora_cluster_id" {
+  description = "Aurora cluster identifier for monitoring."
+  type        = string
+}
+
+variable "redis_cluster_id" {
+  description = "ElastiCache Redis cluster identifier for monitoring."
+  type        = string
+}
+
+variable "alert_email" {
+  description = "Email address for CloudWatch alarm notifications."
+  type        = string
+  default     = ""
+}
+
 

@@ -113,3 +113,15 @@ variable "django_allowed_hosts" {
   default     = "*"
 }
 
+variable "alert_email" {
+  description = "Email address for CloudWatch alarm notifications (e.g., your@email.com)"
+  type        = string
+  default     = ""
+}
+
+variable "api_gateway_stage_name" {
+  description = "API Gateway stage name"
+  type        = string
+  default     = "staging"
+}
+
