@@ -495,11 +495,12 @@ resource "aws_codepipeline" "frontend" {
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
-      input_artifacts = ["build_output"]
+      input_artifacts = ["source_output", "build_output"]
       version         = "1"
 
       configuration = {
-        ProjectName = aws_codebuild_project.frontend.name
+        ProjectName   = aws_codebuild_project.frontend.name
+        PrimarySource = "source_output"
         EnvironmentVariables = jsonencode([
           {
             name  = "DEPLOY_STAGE"
@@ -536,11 +537,12 @@ resource "aws_codepipeline" "frontend" {
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
-      input_artifacts = ["build_output"]
+      input_artifacts = ["source_output", "build_output"]
       version         = "1"
 
       configuration = {
-        ProjectName = aws_codebuild_project.frontend.name
+        ProjectName   = aws_codebuild_project.frontend.name
+        PrimarySource = "source_output"
         EnvironmentVariables = jsonencode([
           {
             name  = "DEPLOY_STAGE"
