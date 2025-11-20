@@ -109,7 +109,7 @@ variable "terraform_state_lock_table" {
 variable "project_operator_user_name" {
   description = "Existing IAM user that should assume the operator role to manage this project."
   type        = string
-  default     = "Apprentice-Finale"
+  default     = "Apprentice-Final"
 }
 
 variable "django_secret_key" {
