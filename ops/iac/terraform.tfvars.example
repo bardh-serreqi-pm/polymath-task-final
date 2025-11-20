@@ -40,12 +40,7 @@ lambda_environment = {
   SESSION_COOKIE_SECURE  = "true"   # Required for HTTPS
   CSRF_COOKIE_SECURE     = "true"   # Required for HTTPS
   # Note: REDIS_PORT is auto-populated from SSM parameter (ElastiCache endpoint)
-}
-
-# Optional overrides for remote state resources and operator user
-# terraform_state_bucket       = "bardhi-apprentice-final-state"
-# terraform_state_lock_table   = "apprentice-final-terraform-state-lock"
-# project_operator_user_name   = "Apprentice-Finale"
+}"
 
 # ============================================================================
 # Edge Configuration
