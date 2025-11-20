@@ -78,4 +78,10 @@ variable "django_allowed_hosts" {
   default     = "*"
 }
 
+variable "django_csrf_trusted_origins" {
+  description = "Comma-separated list of CSRF trusted origins for Django."
+  type        = string
+  default     = ""
+}
+
 

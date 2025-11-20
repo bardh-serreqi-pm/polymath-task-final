@@ -42,6 +42,8 @@ lambda_environment = {
   # Note: REDIS_PORT is auto-populated from SSM parameter (ElastiCache endpoint)
 }
 
+django_csrf_trusted_origins = "https://bardhi.devops.konitron.com,https://d3dw2izdb09tes.cloudfront.net"
+
 # ============================================================================
 # Edge Configuration
 # ============================================================================

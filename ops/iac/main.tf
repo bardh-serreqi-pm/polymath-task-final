@@ -13,24 +13,25 @@ module "data" {
   source = "./modules/data"
 
   providers = {
-    aws            = aws
-    aws.us_west_2  = aws.us_west_2
+    aws           = aws
+    aws.us_west_2 = aws.us_west_2
   }
 
-  project_name         = var.project_name
-  environment          = var.environment
-  tags                 = var.tags
-  vpc_id               = module.network.vpc_id
-  private_subnet_ids   = module.network.private_subnet_ids
-  vpc_cidr_block       = module.network.vpc_cidr_block
-  db_name              = var.db_name
-  db_master_username   = var.db_master_username
-  aurora_min_capacity  = var.aurora_min_capacity
-  aurora_max_capacity  = var.aurora_max_capacity
-  frontend_bucket_name = var.frontend_bucket_name
-  django_secret_key    = var.django_secret_key
-  django_debug         = var.django_debug
-  django_allowed_hosts = var.django_allowed_hosts
+  project_name                = var.project_name
+  environment                 = var.environment
+  tags                        = var.tags
+  vpc_id                      = module.network.vpc_id
+  private_subnet_ids          = module.network.private_subnet_ids
+  vpc_cidr_block              = module.network.vpc_cidr_block
+  db_name                     = var.db_name
+  db_master_username          = var.db_master_username
+  aurora_min_capacity         = var.aurora_min_capacity
+  aurora_max_capacity         = var.aurora_max_capacity
+  frontend_bucket_name        = var.frontend_bucket_name
+  django_secret_key           = var.django_secret_key
+  django_debug                = var.django_debug
+  django_allowed_hosts        = var.django_allowed_hosts
+  django_csrf_trusted_origins = var.django_csrf_trusted_origins
 }
 
 module "compute" {

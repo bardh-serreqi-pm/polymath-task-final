@@ -131,3 +131,7 @@ def load_aws_config():
         # In production, set this via SSM Parameter Store with specific domains
         os.environ.setdefault('ALLOWED_HOSTS', '*')
 
+    csrf_trusted_origins = get_parameter(f'{ssm_prefix}/django/csrf_trusted_origins', required=False)
+    if csrf_trusted_origins:
+        os.environ['CSRF_TRUSTED_ORIGINS'] = csrf_trusted_origins
+
