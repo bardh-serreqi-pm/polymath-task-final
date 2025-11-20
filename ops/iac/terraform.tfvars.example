@@ -42,6 +42,11 @@ lambda_environment = {
   # Note: REDIS_PORT is auto-populated from SSM parameter (ElastiCache endpoint)
 }
 
+# Optional overrides for remote state resources and operator user
+# terraform_state_bucket       = "bardhi-apprentice-final-state"
+# terraform_state_lock_table   = "apprentice-final-terraform-state-lock"
+# project_operator_user_name   = "Apprentice-Finale"
+
 # ============================================================================
 # Edge Configuration
 # ============================================================================

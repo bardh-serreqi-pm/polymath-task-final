@@ -94,6 +94,24 @@ variable "frontend_domain_name" {
   default     = ""
 }
 
+variable "terraform_state_bucket" {
+  description = "S3 bucket that stores Terraform remote state."
+  type        = string
+  default     = "bardhi-apprentice-final-state"
+}
+
+variable "terraform_state_lock_table" {
+  description = "DynamoDB table used for Terraform state locking."
+  type        = string
+  default     = "apprentice-final-terraform-state-lock"
+}
+
+variable "project_operator_user_name" {
+  description = "Existing IAM user that should assume the operator role to manage this project."
+  type        = string
+  default     = "Apprentice-Finale"
+}
+
 variable "django_secret_key" {
   description = "Django SECRET_KEY (if not provided, will be generated)"
   type        = string

@@ -83,6 +83,32 @@ module "observability" {
   alert_email            = var.alert_email
 }
 
+module "iam" {
+  source = "./modules/iam"
+
+  project_name                = var.project_name
+  environment                 = var.environment
+  tags                        = var.tags
+  iam_user_name               = var.project_operator_user_name
+  lambda_function_arn         = module.compute.lambda_function_arn
+  lambda_log_group_name       = module.compute.lambda_log_group_name
+  api_gateway_id              = module.compute.api_gateway_id
+  api_gateway_log_group_name  = module.compute.api_gateway_log_group_name
+  aurora_cluster_arn          = module.data.aurora_cluster_arn
+  aurora_instance_arn         = module.data.aurora_instance_arn
+  aurora_secret_arn           = module.data.aurora_secret_arn
+  redis_cluster_arn           = module.data.redis_cluster_arn
+  frontend_bucket_arn         = module.data.frontend_bucket_arn
+  cloudfront_distribution_arn = module.edge.cloudfront_distribution_arn
+  waf_web_acl_arn             = module.edge.waf_web_acl_arn
+  sns_topic_arn               = module.observability.sns_topic_arn
+  backup_vault_primary_arn    = module.data.backup_vault_primary_arn
+  backup_vault_dr_arn         = module.data.backup_vault_dr_arn
+  ssm_parameter_prefix        = "/${var.project_name}/${var.environment}"
+  terraform_state_bucket      = var.terraform_state_bucket
+  terraform_state_lock_table  = var.terraform_state_lock_table
+}
+
 locals {
   csrf_domain_candidates = [
     var.frontend_domain_name,

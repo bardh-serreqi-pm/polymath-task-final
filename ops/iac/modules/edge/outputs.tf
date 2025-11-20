@@ -13,6 +13,11 @@ output "cloudfront_distribution_id" {
   value       = aws_cloudfront_distribution.this.id
 }
 
+output "cloudfront_distribution_arn" {
+  description = "ARN of the CloudFront distribution."
+  value       = aws_cloudfront_distribution.this.arn
+}
+
 output "frontend_domain_name" {
   description = "Primary domain serving the frontend (custom domain if configured, otherwise the CloudFront domain)."
   value       = local.custom_domain_enabled ? var.frontend_domain_name : aws_cloudfront_distribution.this.domain_name

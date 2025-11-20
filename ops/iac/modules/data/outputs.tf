@@ -33,6 +33,11 @@ output "redis_cluster_id" {
   value       = aws_elasticache_serverless_cache.redis.id
 }
 
+output "redis_cluster_arn" {
+  description = "ARN of the Redis serverless cache cluster."
+  value       = aws_elasticache_serverless_cache.redis.arn
+}
+
 output "redis_endpoint" {
   description = "Redis serverless endpoint."
   value       = aws_elasticache_serverless_cache.redis.endpoint
@@ -57,6 +62,11 @@ output "aurora_writer_endpoint_param_name" {
   value       = aws_ssm_parameter.aurora_writer_endpoint.name
 }
 
+output "aurora_instance_arn" {
+  description = "ARN of the Aurora cluster writer instance."
+  value       = aws_rds_cluster_instance.aurora.arn
+}
+
 output "redis_endpoint_param_name" {
   description = "Name of the SSM parameter containing the Redis endpoint."
   value       = aws_ssm_parameter.redis_endpoint.name
@@ -75,6 +85,16 @@ output "frontend_bucket_arn" {
 output "frontend_bucket_regional_domain_name" {
   description = "Regional domain name of the frontend S3 bucket."
   value       = aws_s3_bucket.frontend.bucket_regional_domain_name
+}
+
+output "backup_vault_primary_arn" {
+  description = "ARN of the primary AWS Backup vault."
+  value       = aws_backup_vault.primary.arn
+}
+
+output "backup_vault_dr_arn" {
+  description = "ARN of the DR AWS Backup vault."
+  value       = aws_backup_vault.dr.arn
 }
 
 
