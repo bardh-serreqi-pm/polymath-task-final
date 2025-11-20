@@ -166,6 +166,27 @@ data "aws_iam_policy_document" "project_operator" {
   }
 
   statement {
+    sid    = "ECRManagement"
+    effect = "Allow"
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage",
+      "ecr:PutImage",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload",
+      "ecr:DescribeRepositories",
+      "ecr:DescribeImages",
+      "ecr:ListImages",
+      "ecr:TagResource",
+      "ecr:UntagResource"
+    ]
+    resources = [var.ecr_repository_arn]
+  }
+
+  statement {
     sid    = "LambdaManagement"
     effect = "Allow"
     actions = [
@@ -250,9 +271,36 @@ data "aws_iam_policy_document" "project_operator" {
       "cloudfront:GetInvalidation",
       "cloudfront:ListInvalidations",
       "cloudfront:TagResource",
-      "cloudfront:UntagResource"
+      "cloudfront:UntagResource",
+      "cloudfront:GetFunction",
+      "cloudfront:CreateFunction",
+      "cloudfront:UpdateFunction",
+      "cloudfront:DeleteFunction",
+      "cloudfront:PublishFunction",
+      "cloudfront:ListFunctions",
+      "cloudfront:GetResponseHeadersPolicy",
+      "cloudfront:CreateResponseHeadersPolicy",
+      "cloudfront:UpdateResponseHeadersPolicy",
+      "cloudfront:DeleteResponseHeadersPolicy",
+      "cloudfront:ListResponseHeadersPolicies",
+      "cloudfront:GetOriginRequestPolicy",
+      "cloudfront:CreateOriginRequestPolicy",
+      "cloudfront:UpdateOriginRequestPolicy",
+      "cloudfront:DeleteOriginRequestPolicy",
+      "cloudfront:ListOriginRequestPolicies",
+      "cloudfront:GetOriginAccessControl",
+      "cloudfront:CreateOriginAccessControl",
+      "cloudfront:UpdateOriginAccessControl",
+      "cloudfront:DeleteOriginAccessControl",
+      "cloudfront:ListOriginAccessControls"
     ]
-    resources = [local.cloudfront_distribution_arn]
+    resources = [
+      local.cloudfront_distribution_arn,
+      "arn:${local.partition}:cloudfront::${local.account_id}:function/${var.project_name}-${var.environment}-*",
+      "arn:${local.partition}:cloudfront::${local.account_id}:response-headers-policy/${var.project_name}-${var.environment}-*",
+      "arn:${local.partition}:cloudfront::${local.account_id}:origin-request-policy/${var.project_name}-${var.environment}-*",
+      "arn:${local.partition}:cloudfront::${local.account_id}:origin-access-control/${var.project_name}-${var.environment}-*"
+    ]
   }
 
   statement {

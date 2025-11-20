@@ -18,6 +18,11 @@ output "ecr_repository_url" {
   value       = aws_ecr_repository.api.repository_url
 }
 
+output "ecr_repository_arn" {
+  description = "ARN of the ECR repository for the API image."
+  value       = aws_ecr_repository.api.arn
+}
+
 output "api_gateway_url" {
   description = "Invoke URL for the API Gateway stage."
   value       = aws_apigatewayv2_stage.api.invoke_url

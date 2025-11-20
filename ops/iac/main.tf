@@ -92,6 +92,7 @@ module "iam" {
   iam_user_name               = var.project_operator_user_name
   lambda_function_arn         = module.compute.lambda_function_arn
   lambda_log_group_name       = module.compute.lambda_log_group_name
+  ecr_repository_arn          = module.compute.ecr_repository_arn
   api_gateway_id              = module.compute.api_gateway_id
   api_gateway_log_group_name  = module.compute.api_gateway_log_group_name
   aurora_cluster_arn          = module.data.aurora_cluster_arn

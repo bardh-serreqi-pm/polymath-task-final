@@ -105,4 +105,9 @@ variable "backup_vault_dr_arn" {
   type        = string
 }
 
+variable "ecr_repository_arn" {
+  description = "ARN of the ECR repository for the Lambda container image."
+  type        = string
+}
+
 
