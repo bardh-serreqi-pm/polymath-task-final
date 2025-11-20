@@ -136,12 +136,6 @@ resource "aws_rds_cluster" "aurora" {
   db_subnet_group_name   = aws_db_subnet_group.aurora.name
   vpc_security_group_ids = [aws_security_group.aurora.id]
 
-  # ============================================================================
-  # HIGH AVAILABILITY: Multi-AZ Configuration
-  # ============================================================================
-  # Pinned to specific AZs to prevent cluster replacement on AZ list changes
-  availability_zones = ["us-east-1a", "us-east-1b"]
-
   # Security
   storage_encrypted   = true
   deletion_protection = false # Set to true for production
