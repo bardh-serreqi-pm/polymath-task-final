@@ -17,21 +17,20 @@ module "data" {
     aws.us_west_2 = aws.us_west_2
   }
 
-  project_name                = var.project_name
-  environment                 = var.environment
-  tags                        = var.tags
-  vpc_id                      = module.network.vpc_id
-  private_subnet_ids          = module.network.private_subnet_ids
-  vpc_cidr_block              = module.network.vpc_cidr_block
-  db_name                     = var.db_name
-  db_master_username          = var.db_master_username
-  aurora_min_capacity         = var.aurora_min_capacity
-  aurora_max_capacity         = var.aurora_max_capacity
-  frontend_bucket_name        = var.frontend_bucket_name
-  django_secret_key           = var.django_secret_key
-  django_debug                = var.django_debug
-  django_allowed_hosts        = var.django_allowed_hosts
-  django_csrf_trusted_origins = var.django_csrf_trusted_origins
+  project_name         = var.project_name
+  environment          = var.environment
+  tags                 = var.tags
+  vpc_id               = module.network.vpc_id
+  private_subnet_ids   = module.network.private_subnet_ids
+  vpc_cidr_block       = module.network.vpc_cidr_block
+  db_name              = var.db_name
+  db_master_username   = var.db_master_username
+  aurora_min_capacity  = var.aurora_min_capacity
+  aurora_max_capacity  = var.aurora_max_capacity
+  frontend_bucket_name = var.frontend_bucket_name
+  django_secret_key    = var.django_secret_key
+  django_debug         = var.django_debug
+  django_allowed_hosts = var.django_allowed_hosts
 }
 
 module "compute" {
@@ -82,5 +81,30 @@ module "observability" {
   aurora_cluster_id      = module.data.aurora_cluster_id
   redis_cluster_id       = module.data.redis_cluster_id
   alert_email            = var.alert_email
+}
+
+locals {
+  csrf_domain_candidates = [
+    var.frontend_domain_name,
+    module.edge.cloudfront_distribution_domain
+  ]
+
+  csrf_trusted_origins = distinct(compact([
+    for domain in local.csrf_domain_candidates : (
+      domain != "" ?
+      (length(regexall("^https?://", domain)) > 0 ? domain : "https://${domain}") :
+      null
+    )
+  ]))
+}
+
+resource "aws_ssm_parameter" "django_csrf_trusted_origins" {
+  name        = "/${var.project_name}/${var.environment}/django/csrf_trusted_origins"
+  description = "Django CSRF_TRUSTED_ORIGINS for ${var.environment}"
+  type        = "String"
+  value       = join(",", local.csrf_trusted_origins)
+  overwrite   = true
+
+  tags = var.tags
 }
 

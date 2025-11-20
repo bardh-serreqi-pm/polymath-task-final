@@ -279,16 +279,6 @@ resource "aws_ssm_parameter" "django_allowed_hosts" {
   tags = local.common_tags
 }
 
-resource "aws_ssm_parameter" "django_csrf_trusted_origins" {
-  name        = "/${var.project_name}/${var.environment}/django/csrf_trusted_origins"
-  description = "Django CSRF_TRUSTED_ORIGINS for ${var.environment}"
-  type        = "String"
-  value       = var.django_csrf_trusted_origins
-  overwrite   = true
-
-  tags = local.common_tags
-}
-
 resource "aws_s3_bucket" "frontend" {
   bucket = local.frontend_bucket_name
 
