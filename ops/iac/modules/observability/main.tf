@@ -209,10 +209,10 @@ resource "aws_cloudwatch_metric_alarm" "redis_cpu" {
   period              = 300
   statistic           = "Average"
   namespace           = "AWS/ElastiCache"
-  metric_name         = "CPUUtilization"
+  metric_name         = "ElastiCacheDatabaseMemoryUsageCountedForEvictPercentage"
 
   dimensions = {
-    CacheClusterId = var.redis_cluster_id
+    clusterId = var.redis_cluster_id
   }
 
   alarm_actions = [aws_sns_topic.alerts.arn]
@@ -231,10 +231,10 @@ resource "aws_cloudwatch_metric_alarm" "redis_memory" {
   period              = 300
   statistic           = "Average"
   namespace           = "AWS/ElastiCache"
-  metric_name         = "DatabaseMemoryUsagePercentage"
+  metric_name         = "ElastiCacheDatabaseMemoryUsageCountedForEvictPercentage"
 
   dimensions = {
-    CacheClusterId = var.redis_cluster_id
+    clusterId = var.redis_cluster_id
   }
 
   alarm_actions = [aws_sns_topic.alerts.arn]
@@ -411,11 +411,11 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 8
         height = 6
         properties = {
-          title  = "ElastiCache Redis - Cache Performance"
+          title  = "ElastiCache Redis - Connections"
           region = data.aws_region.current.name
           metrics = [
-            ["AWS/ElastiCache", "CacheHits", "CacheClusterId", var.redis_cluster_id, { stat = "Sum", label = "Cache Hits", color = "#2ca02c" }],
-            [".", "CacheMisses", ".", ".", { stat = "Sum", label = "Cache Misses", color = "#d62728" }]
+            ["AWS/ElastiCache", "CurrConnections", "clusterId", var.redis_cluster_id, { stat = "Average", label = "Current Connections", color = "#2ca02c" }],
+            [".", "NewConnections", ".", ".", { stat = "Sum", label = "New Connections", color = "#1f77b4" }]
           ]
           yAxis = {
             left = {
@@ -435,10 +435,11 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 8
         height = 6
         properties = {
-          title  = "ElastiCache Redis - CPU Utilization"
+          title  = "ElastiCache Redis - Throughput"
           region = data.aws_region.current.name
           metrics = [
-            ["AWS/ElastiCache", "CPUUtilization", "CacheClusterId", var.redis_cluster_id, { stat = "Average" }]
+            ["AWS/ElastiCache", "BytesReadFromDisk", "clusterId", var.redis_cluster_id, { stat = "Sum", label = "Bytes Read", color = "#2ca02c" }],
+            [".", "BytesWrittenToDisk", ".", ".", { stat = "Sum", label = "Bytes Written", color = "#d62728" }]
           ]
           yAxis = {
             left = {
@@ -472,7 +473,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           title  = "ElastiCache Redis - Memory Usage"
           region = data.aws_region.current.name
           metrics = [
-            ["AWS/ElastiCache", "DatabaseMemoryUsagePercentage", "CacheClusterId", var.redis_cluster_id, { stat = "Average" }]
+            ["AWS/ElastiCache", "ElastiCacheDatabaseMemoryUsageCountedForEvictPercentage", "clusterId", var.redis_cluster_id, { stat = "Average", label = "Memory Usage %" }]
           ]
           yAxis = {
             left = {
