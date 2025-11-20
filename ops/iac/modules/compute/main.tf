@@ -477,6 +477,7 @@ resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
 # API Gateway account settings (region-level, applies to all APIs in the region)
 resource "aws_api_gateway_account" "main" {
   cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
+  reset_on_delete     = true
 }
 
 # ============================================================================

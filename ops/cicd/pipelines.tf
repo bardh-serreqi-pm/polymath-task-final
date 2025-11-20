@@ -251,6 +251,23 @@ resource "aws_codepipeline" "backend" {
     }
   }
 
+  # Approval Stage (after source)
+  stage {
+    name = "Source-Approval"
+
+    action {
+      name     = "Manual-Approval"
+      category = "Approval"
+      owner    = "AWS"
+      provider = "Manual"
+      version  = "1"
+
+      configuration = {
+        CustomData = "Please review the source code changes and approve to proceed with build and deployment."
+      }
+    }
+  }
+
   # Build Stage
   stage {
     name = "Build"
@@ -463,6 +480,23 @@ resource "aws_codepipeline" "frontend" {
         FullRepositoryId = "${var.github_owner}/${var.github_repo}"
         BranchName       = var.github_branch
         DetectChanges    = "true"
+      }
+    }
+  }
+
+  # Approval Stage (after source)
+  stage {
+    name = "Source-Approval"
+
+    action {
+      name     = "Manual-Approval"
+      category = "Approval"
+      owner    = "AWS"
+      provider = "Manual"
+      version  = "1"
+
+      configuration = {
+        CustomData = "Please review the source code changes and approve to proceed with build and deployment."
       }
     }
   }
