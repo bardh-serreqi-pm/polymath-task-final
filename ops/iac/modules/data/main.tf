@@ -173,6 +173,10 @@ resource "aws_rds_cluster" "aurora" {
     max_capacity = var.aurora_max_capacity
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = merge(local.common_tags, {
     Name                         = "${var.project_name}-${var.environment}-aurora-cluster",
     "disaster-recovery:strategy" = "pilot-light",
@@ -287,6 +291,10 @@ resource "aws_ssm_parameter" "django_allowed_hosts" {
 
 resource "aws_s3_bucket" "frontend" {
   bucket = local.frontend_bucket_name
+
+  lifecycle {
+    prevent_destroy = true
+  }
 
   tags = merge(local.common_tags, { Name = local.frontend_bucket_name })
 }

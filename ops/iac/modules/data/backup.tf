@@ -54,6 +54,10 @@ resource "aws_iam_role_policy_attachment" "backup_restore" {
 resource "aws_backup_vault" "primary" {
   name = "${var.project_name}-${var.environment}-vault"
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = merge(local.common_tags, {
     Name                         = "${var.project_name}-${var.environment}-vault"
     "disaster-recovery:location" = "primary"
@@ -74,6 +78,10 @@ resource "aws_backup_vault" "primary" {
 resource "aws_backup_vault" "dr" {
   provider = aws.us_west_2
   name     = "${var.project_name}-${var.environment}-dr-vault"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 
   tags = merge(local.common_tags, {
     Name                         = "${var.project_name}-${var.environment}-dr-vault"
