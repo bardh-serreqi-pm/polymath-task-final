@@ -40,7 +40,7 @@ lambda_environment = {
   SESSION_COOKIE_SECURE  = "true"   # Required for HTTPS
   CSRF_COOKIE_SECURE     = "true"   # Required for HTTPS
   # Note: REDIS_PORT is auto-populated from SSM parameter (ElastiCache endpoint)
-}"
+}
 
 # ============================================================================
 # Edge Configuration
@@ -65,6 +65,7 @@ tags = {
 # Monitoring & Alerting Configuration
 # ============================================================================
 # Email address for CloudWatch alarm notifications (receives alarms via SNS)
+# Leave empty if you don't want email notifications
 # You will need to confirm the subscription via email after deployment
 alert_email = "bardh.serreqi@polymath.services"  # Example: "your-email@example.com"
 
