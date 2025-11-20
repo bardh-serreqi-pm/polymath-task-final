@@ -102,7 +102,7 @@ module "iam" {
   cloudfront_distribution_arn = module.edge.cloudfront_distribution_arn
   waf_web_acl_arn             = module.edge.waf_web_acl_arn
   sns_topic_arn               = module.observability.sns_topic_arn
-  backup_vault_primary_arn    = module.data.backup_vault_primary_arn
+  backup_vault_primary_arn    = module.data.backup_vault_arn
   backup_vault_dr_arn         = module.data.backup_vault_dr_arn
   ssm_parameter_prefix        = "/${var.project_name}/${var.environment}"
   terraform_state_bucket      = var.terraform_state_bucket

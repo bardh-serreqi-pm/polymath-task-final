@@ -87,14 +87,4 @@ output "frontend_bucket_regional_domain_name" {
   value       = aws_s3_bucket.frontend.bucket_regional_domain_name
 }
 
-output "backup_vault_primary_arn" {
-  description = "ARN of the primary AWS Backup vault."
-  value       = aws_backup_vault.primary.arn
-}
-
-output "backup_vault_dr_arn" {
-  description = "ARN of the DR AWS Backup vault."
-  value       = aws_backup_vault.dr.arn
-}
-
 
