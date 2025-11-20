@@ -11,7 +11,7 @@ locals {
 
   state_bucket_arn         = data.aws_s3_bucket.terraform_state.arn
   state_bucket_objects_arn = "${data.aws_s3_bucket.terraform_state.arn}/*"
-  lock_table_arn           = data.aws_dynamodb_table.terraform_lock.arn
+  lock_table_arn           = "arn:${local.partition}:dynamodb:${local.region}:${local.account_id}:table/${var.terraform_state_lock_table}"
 
   frontend_bucket_objects_arn = "${var.frontend_bucket_arn}/*"
   lambda_log_group_arn        = "arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:${var.lambda_log_group_name}:*"
@@ -42,10 +42,6 @@ locals {
 
 data "aws_s3_bucket" "terraform_state" {
   bucket = var.terraform_state_bucket
-}
-
-data "aws_dynamodb_table" "terraform_lock" {
-  name = var.terraform_state_lock_table
 }
 
 data "aws_iam_policy_document" "project_operator" {
