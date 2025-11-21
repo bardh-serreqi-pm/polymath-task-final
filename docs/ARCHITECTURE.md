@@ -54,7 +54,7 @@ This project implements **Option B: Serverless Architecture** for the Habit Trac
 | **Control** | Less control over runtime | More control |
 | **Best For** | Variable traffic, cost-sensitive | Predictable traffic, need for control |
 
-**Decision**: Serverless chosen for cost efficiency, automatic scaling, and reduced operational complexity, which aligns with the project's requirements for a multi-tier web application with variable traffic patterns.
+**Decision**: Serverless chosen for cost efficiency, automatic scaling, and reduced operational complexity, which aligns with the project's requirements, as this is a simple habit tracking app, which is projected to have spaced out requests.
 
 ---
 
