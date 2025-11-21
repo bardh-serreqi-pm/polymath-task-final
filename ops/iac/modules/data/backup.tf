@@ -201,11 +201,27 @@ resource "aws_cloudwatch_metric_alarm" "backup_failures" {
 }
 
 # ============================================================================
+# S3 Bucket for Frontend (DR Region - Static Assets)
+# ============================================================================
+
+resource "aws_s3_bucket" "frontend_dr" {
+  provider = aws.us_west_2
+  bucket   = "${var.project_name}-${var.environment}-frontend-dr"
+
+  tags = merge(local.common_tags, {
+    Name                         = "${var.project_name}-${var.environment}-frontend-dr"
+    "disaster-recovery:location" = "secondary"
+    "disaster-recovery:region"   = "us-west-2"
+  })
+}
+
+# ============================================================================
 # S3 Bucket Versioning for Frontend (Static Assets DR)
 # ============================================================================
 
 resource "aws_s3_bucket_versioning" "frontend_dr" {
-  bucket = aws_s3_bucket.frontend.id
+  provider = aws.us_west_2
+  bucket   = aws_s3_bucket.frontend_dr.id
 
   versioning_configuration {
     status = "Enabled" # Enables point-in-time recovery for S3 objects
