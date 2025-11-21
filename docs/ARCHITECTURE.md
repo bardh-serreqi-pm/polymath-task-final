@@ -17,14 +17,14 @@
 
 ## Architecture Overview
 
-This project implements **Option B: Serverless Architecture** for the Habit Tracker application. The architecture leverages AWS serverless services to provide a scalable, cost-effective, and maintainable solution.
+This project implements **Option B: Serverless Architecture** using AWS serverless services to provide a scalable, cost-effective, and maintainable infrastructure solution.
 
 ### Key Architectural Decisions
 
-1. **Serverless Compute**: AWS Lambda with container images for the Django API
+1. **Serverless Compute**: AWS Lambda with container images
 2. **Serverless Database**: Aurora Serverless v2 (PostgreSQL) for automatic scaling
-3. **Serverless Cache**: ElastiCache Serverless (Redis) for session and cache storage
-4. **Static Frontend**: React SPA hosted on S3 with CloudFront CDN
+3. **Serverless Cache**: ElastiCache Serverless (Redis)
+4. **Static Frontend Hosting**: S3 bucket with CloudFront CDN
 5. **API Gateway**: HTTP API for Lambda integration and request routing
 6. **Infrastructure as Code**: Terraform with modular design
 
@@ -54,7 +54,7 @@ This project implements **Option B: Serverless Architecture** for the Habit Trac
 | **Control** | Less control over runtime | More control |
 | **Best For** | Variable traffic, cost-sensitive | Predictable traffic, need for control |
 
-**Decision**: Serverless chosen for cost efficiency, automatic scaling, and reduced operational complexity, which aligns with the project's requirements, as this is a simple habit tracking app, which is projected to have spaced out requests.
+**Decision**: Serverless chosen for cost efficiency, automatic scaling, and reduced operational complexity, which aligns with variable traffic patterns and cost-sensitive requirements.
 
 ---
 
@@ -64,14 +64,13 @@ This project implements **Option B: Serverless Architecture** for the Habit Trac
 
 ![AWS Serverless Architecture Diagram](Brainboard-BardhiServerlessApp.png)
 
-The
-### Component Interaction Flow
+### Infrastructure Component Flow
 
-1. **User Request** → Route53 DNS → CloudFront CDN
-2. **CloudFront** → Routes to S3 (frontend) or API Gateway (API)
+1. **Request** → Route53 DNS → CloudFront CDN
+2. **CloudFront** → Routes to S3 (static content) or API Gateway (API requests)
 3. **API Gateway** → Invokes Lambda function
-4. **Lambda** → Connects to Aurora (database) and ElastiCache (cache)
-5. **Response** → Returns through API Gateway → CloudFront → User
+4. **Lambda** → Connects to Aurora (database) and ElastiCache (cache) via VPC
+5. **Response** → Returns through API Gateway → CloudFront → Client
 
 ---
 
@@ -90,15 +89,15 @@ The
 
 - **API Gateway (HTTP API)**: 
   - Stage: `staging`
-  - Integration: Lambda function
-  - Routes: `/api/*`, `/health/`, `/Login/`, etc.
+  - Integration: Lambda function (proxy integration)
+  - Routes: Configured for API and health check endpoints
   
 - **Lambda Function**:
-  - Runtime: Container image (Django)
+  - Runtime: Container image
   - Image: Stored in ECR
   - VPC: Attached to private subnets
-  - Memory: Auto-configured
-  - Timeout: 30 seconds (default)
+  - Memory: Configurable
+  - Timeout: Configurable (default: 30 seconds)
 
 #### Data Layer
 
@@ -116,7 +115,7 @@ The
   - TLS: Required
 
 - **S3 Bucket**:
-  - Purpose: Static frontend hosting
+  - Purpose: Static content hosting
   - Versioning: Enabled
   - Public Access: Blocked (accessed via CloudFront OAC)
 
@@ -187,47 +186,19 @@ The
 
 ## Component Details
 
-### Frontend (React SPA)
-
-**Technology**: React with Vite
-
-**Deployment**:
-- Built: `npm run build` → `dist/` directory
-- Hosted: S3 bucket (static website hosting)
-- CDN: CloudFront distribution
-- Routing: CloudFront Function rewrites SPA routes to `index.html`
-
-**Features**:
-- Single Page Application (SPA)
-- Client-side routing
-- API integration via fetch/axios
-- Session management via cookies
-
-### Backend (Django API)
-
-**Technology**: Django 4.1+ with Mangum (ASGI adapter)
+### Lambda Function
 
 **Deployment**:
 - Container: Docker image stored in ECR
 - Runtime: AWS Lambda (container image)
-- Entry Point: `lambda_handler.py`
-
-**Key Components**:
-- **Django Apps**:
-  - `habit` - Habit tracking functionality
-  - `Users` - User management and authentication
-- **Middleware**:
-  - `AllowAllHostsMiddleware` - Bypass ALLOWED_HOSTS for Lambda
-  - `CorsMiddleware` - CORS headers
-  - `StripStagePrefixMiddleware` - Remove API Gateway stage prefix
-- **Health Check**: `/health/` endpoint
-- **API Endpoints**: `/api/*` routes
+- VPC Configuration: Attached to private subnets
+- Environment Variables: Configured via SSM Parameter Store
+- Secrets: Retrieved from AWS Secrets Manager
 
 **Configuration**:
-- Database: Aurora PostgreSQL (via Secrets Manager)
-- Cache: ElastiCache Redis (via SSM)
-- Sessions: Stored in Redis
-- CSRF: Cookie-based with trusted origins
+- Database Connection: Aurora PostgreSQL (via Secrets Manager)
+- Cache Connection: ElastiCache Redis (via SSM Parameter Store)
+- IAM Role: Least-privilege access to required AWS services
 
 ### Database (Aurora Serverless v2)
 
@@ -257,8 +228,8 @@ The
 - **Access**: Lambda via security group rules
 
 **Usage**:
-- Session storage (Django sessions)
-- General caching (Django cache framework)
+- Session storage
+- General caching
 
 ### API Gateway
 
@@ -267,24 +238,21 @@ The
 **Configuration**:
 - **Stage**: `staging`
 - **Integration**: Lambda function (proxy integration)
-- **Routes**: 
-  - `/api/*` → Lambda
-  - `/health/` → Lambda
-  - `/Login/`, `/Register/`, etc. → Lambda
-- **CORS**: Handled by Django middleware
+- **Routes**: Configured to route requests to Lambda function
+- **CORS**: Configured at API Gateway level
 - **Logging**: CloudWatch Logs enabled
 
 ### CloudFront
 
 **Configuration**:
 - **Origins**:
-  - S3 bucket (frontend) - OAC authentication
-  - API Gateway (backend) - Direct integration
+  - S3 bucket (static content) - OAC authentication
+  - API Gateway (API) - Direct integration
 - **Behaviors**:
-  - Default: S3 (frontend)
+  - Default: S3 (static content)
   - `/api/*`: API Gateway
   - Specific routes: API Gateway
-- **Functions**: SPA routing rewrite
+- **Functions**: CloudFront Functions for routing
 - **WAF**: Associated web ACL
 - **HTTPS**: ACM certificate
 
@@ -292,45 +260,34 @@ The
 
 **Configuration**:
 - **Scope**: CloudFront
-- **Rules**: Custom rules for application-specific protection
-- **Managed Rules**: AWS Managed Rules (optional, currently disabled)
+- **Rules**: 8 custom rules for protection (IP reputation, rate limiting, SQL injection, XSS, size restrictions, user-agent filtering, health check allowance)
+- **Managed Rules**: AWS Managed Rules for IP reputation
 
 ---
 
 ## Data Flow
 
-### User Request Flow
+### Request Flow
 
-1. **User** → Types URL in browser
-2. **DNS Resolution** → Route53 resolves to CloudFront distribution
+1. **Client Request** → Route53 DNS resolution
+2. **Route53** → Resolves to CloudFront distribution
 3. **CloudFront** → Checks cache, routes based on path:
-   - Static assets (`/static/*`, `/*.js`, `/*.css`) → S3
-   - API calls (`/api/*`) → API Gateway
-   - SPA routes (`/`, `/habits`, etc.) → S3 (rewritten to `index.html`)
+   - Static content → S3 bucket
+   - API requests (`/api/*`) → API Gateway
 4. **API Gateway** → Invokes Lambda function
 5. **Lambda** → Processes request:
-   - Checks Redis for session/cache
-   - Queries Aurora if needed
-   - Returns JSON response
-6. **Response** → Returns through API Gateway → CloudFront → User
+   - Connects to ElastiCache (cache/session lookup)
+   - Connects to Aurora (database queries if needed)
+   - Returns response
+6. **Response** → Returns through API Gateway → CloudFront → Client
 
-### Authentication Flow
+### Infrastructure Data Flow
 
-1. **User** → Submits login form
-2. **Frontend** → POST to `/Login/`
-3. **API Gateway** → Routes to Lambda
-4. **Lambda** → Django authenticates user
-5. **Django** → Creates session in Redis
-6. **Response** → Sets session cookie (HttpOnly, Secure, SameSite=None)
-7. **Subsequent Requests** → Cookie sent automatically, session validated
-
-### Database Query Flow
-
-1. **Lambda** → Needs database data
-2. **Django ORM** → Generates SQL query
-3. **Connection** → Connects to Aurora writer endpoint
-4. **Aurora** → Executes query, returns results
-5. **Lambda** → Processes results, returns JSON
+1. **Lambda** → Requires database access
+2. **Connection** → Establishes connection to Aurora writer endpoint via VPC
+3. **Aurora** → Executes query, returns results
+4. **Lambda** → Processes results, may cache in ElastiCache
+5. **Response** → Returns through API Gateway
 
 ---
 
@@ -386,12 +343,12 @@ The
 
 ### Application Security
 
-- **WAF**: Protects against common web exploits
+- **WAF**: Protects against common web exploits (8 custom rules)
 - **HTTPS Only**: All traffic encrypted in transit
 - **Secrets Management**: Database credentials in Secrets Manager
 - **IAM**: Least-privilege roles for all services
-- **CORS**: Configured for specific origins
-- **CSRF Protection**: Django CSRF tokens with trusted origins
+- **CORS**: Configured at API Gateway level
+- **CSRF Protection**: Configured via environment variables
 
 ### Data Security
 
@@ -449,7 +406,7 @@ The
 
 - **Region**: us-west-2
 - **Resources**: Backup vault for cross-region replication
-- **Failover**: Manual process (see `docs/RUNBOOK_DR.md`)
+- **Failover**: Manual process (see `docs/RUNBOOK.md`)
 
 ---
 
@@ -464,9 +421,9 @@ The
 
 ### Performance Optimization
 
-- **CloudFront Caching**: Static assets cached at edge
-- **Redis Caching**: Reduces database load
-- **Connection Pooling**: Django database connection pooling
+- **CloudFront Caching**: Static content cached at edge locations
+- **ElastiCache Caching**: Reduces database load
+- **Connection Pooling**: Database connection pooling
 - **CDN**: Reduces latency for global users
 
 ---

@@ -1,17 +1,19 @@
-# Apprentice Final Project - Habit Tracker Application
+# Apprentice Final Project - AWS Serverless Infrastructure
 
 ## Overview
 
-This project implements a multi-tier web application (Habit Tracker) that runs both locally using Docker Compose and in AWS using a serverless architecture. The application consists of a React frontend, Django REST API backend, PostgreSQL database, and Redis cache.
+This project implements a complete AWS serverless infrastructure using Infrastructure as Code (Terraform). The infrastructure supports a multi-tier serverless architecture with automated CI/CD pipelines.
 
 **Architecture Choice**: Option B - Serverless Architecture
 
-**Key Technologies:**
-- **Frontend**: React (Vite)
-- **Backend**: Django (Python) running on AWS Lambda
+**Key AWS Services:**
+- **Compute**: AWS Lambda (container images)
 - **Database**: Aurora Serverless v2 (PostgreSQL)
 - **Cache**: ElastiCache Serverless (Redis)
-- **Infrastructure**: Terraform (Infrastructure as Code)
+- **Storage**: S3 (static content hosting)
+- **CDN**: CloudFront with WAF
+- **API**: API Gateway (HTTP API)
+- **Infrastructure as Code**: Terraform (modular design)
 - **CI/CD**: AWS CodePipeline with CodeBuild
 
 ---
@@ -19,7 +21,6 @@ This project implements a multi-tier web application (Habit Tracker) that runs b
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
-- [Local Development](#local-development)
 - [AWS Deployment](#aws-deployment)
 - [Project Structure](#project-structure)
 - [Configuration](#configuration)
@@ -33,12 +34,8 @@ This project implements a multi-tier web application (Habit Tracker) that runs b
 
 ### Required Software
 
-- **Docker** (version 20.10+)
-- **Docker Compose** (version 2.0+)
 - **Terraform** (version 1.0+)
 - **AWS CLI** (version 2.0+)
-- **Node.js** (version 18+) - for local frontend development
-- **Python** (version 3.11+) - for local backend development
 - **Git**
 
 ### AWS Account Requirements
@@ -54,116 +51,6 @@ The IAM user/role needs permissions for:
 - VPC, EC2, Lambda, API Gateway, RDS, ElastiCache, S3, CloudFront, WAF, Route53, ACM, CloudWatch, SNS, Secrets Manager, SSM, IAM, CodePipeline, CodeBuild, ECR, Backup
 
 See `ops/iac/modules/iam/` for the least-privilege operator role configuration.
-
----
-
-## Local Development
-
-### Quick Start
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd PolymathFinalTask
-   ```
-
-2. **Set up environment variables**
-   ```bash
-   # Copy example environment file
-   cp packages/api/local_settings.example.py packages/api/local_settings.py
-   
-   # Edit local_settings.py with your local database credentials
-   # Or use the default SQLite configuration (for development only)
-   ```
-
-3. **Start the application with Docker Compose**
-   ```bash
-   cd packages
-   docker-compose up --build
-   ```
-
-4. **Access the application**
-   - Frontend: http://localhost
-   - Backend API: http://localhost:8000
-   - Health Check: http://localhost:8000/health/
-
-5. **View logs**
-   ```bash
-   docker-compose logs -f
-   # Or for specific service:
-   docker-compose logs -f api
-   docker-compose logs -f web
-   docker-compose logs -f db
-   docker-compose logs -f cache
-   ```
-
-### Local Development Details
-
-#### Docker Compose Services
-
-The `packages/docker-compose.yml` defines four containers:
-
-1. **web** - React frontend (Vite dev server)
-   - Port: 3000
-   - Hot reload enabled
-   - Environment: Development
-
-2. **api** - Django backend API
-   - Port: 8000
-   - Database: PostgreSQL (db service)
-   - Cache: Redis (cache service)
-   - Auto-reload on code changes
-
-3. **db** - PostgreSQL database
-   - Port: 5432 (internal only)
-   - Data persisted in Docker volume
-   - Default database: `habit_tracker`
-
-4. **cache** - Redis cache
-   - Port: 6379 (internal only)
-   - No persistence (ephemeral for development)
-
-#### Environment Variables
-
-All configuration is externalized via environment variables:
-
-**Backend (.env or local_settings.py):**
-- `DB_HOST` - Database hostname
-- `DB_NAME` - Database name
-- `DB_USER` - Database username
-- `DB_PASSWORD` - Database password
-- `DB_PORT` - Database port (default: 5432)
-- `REDIS_HOST` - Redis hostname
-- `REDIS_PORT` - Redis port (default: 6379)
-- `SECRET_KEY` - Django secret key
-- `DEBUG` - Debug mode (true/false)
-- `ALLOWED_HOSTS` - Comma-separated list of allowed hosts
-
-**Frontend:**
-- `VITE_API_URL` - Backend API URL (default: http://localhost:8000)
-
-### Running Tests Locally
-
-```bash
-# Backend tests
-cd packages/api
-python manage.py test
-
-# Frontend tests (if configured)
-cd packages/web
-npm test
-```
-
-### Database Migrations
-
-```bash
-# Run migrations
-cd packages/api
-python manage.py migrate
-
-# Create new migrations
-python manage.py makemigrations
-```
 
 ---
 
@@ -200,30 +87,30 @@ The deployment is fully automated through AWS CodePipeline. No manual steps requ
 
 1. **Terraform Pipeline**:
    - Creates infrastructure (VPC, ECR, S3, CloudFront, Aurora, Redis, API Gateway, Lambda, etc.)
-   - Uses the `lambda_image_uri` from `terraform.tfvars` (defaults to the manually seeded `apprentice-final-dummy:manual` image for initial deployment)
-   - Stores Lambda configuration in SSM parameters for Backend pipeline
-   - The backend pipeline later updates Lambda with the real image from the Terraform-managed ECR repository
+   - Uses the `lambda_image_uri` from `terraform.tfvars`
+   - Stores Lambda configuration in SSM parameters for application pipelines
+   - Application pipelines later update Lambda with images from the Terraform-managed ECR repository
 
 2. **Backend Pipeline** (runs after Terraform, with approval stage):
    - **Source** → Pulls code from GitHub
    - **Source-Approval** → Manual approval (ensures Terraform pipeline completed first)
    - **Build** → Builds Docker image, pushes to ECR
-   - **Deploy-Staging** → **Creates Lambda function if it doesn't exist**, or updates it with new image
+   - **Deploy-Staging** → Creates Lambda function if it doesn't exist, or updates it with new image
    - **Test** → Runs health checks
    - **Approval** → Manual approval for production
    - **Deploy-Production** → Updates Lambda (production)
 
 3. **Frontend Pipeline**:
-   - Builds React application
+   - Builds frontend application
    - Deploys to S3 and invalidates CloudFront
 
 **First Deployment** (Automatic):
-1. Terraform pipeline → Creates infrastructure including Lambda (using dummy image `apprentice-final-dummy:manual`)
-2. Backend pipeline → Builds real image, pushes to ECR, updates Lambda with the real image
-3. Frontend pipeline → Deploys frontend
+1. Terraform pipeline → Creates infrastructure including Lambda
+2. Backend pipeline → Builds container image, pushes to ECR, updates Lambda
+3. Frontend pipeline → Deploys frontend to S3
 
 **Subsequent Deployments** (Automatic):
-- Terraform pipeline → Updates infrastructure (Lambda already exists)
+- Terraform pipeline → Updates infrastructure
 - Backend pipeline → Builds new image, updates Lambda
 - Frontend pipeline → Deploys new build
 
@@ -258,13 +145,13 @@ terraform apply
 
 ### Application Deployment (CI/CD)
 
-The application is deployed automatically via AWS CodePipeline when code is pushed to the repository.
+Application code is deployed automatically via AWS CodePipeline when code is pushed to the repository.
 
 #### Pipeline Flow
 
 1. **Source** - Pulls code from GitHub
 2. **Source-Approval** - Manual approval to proceed
-3. **Build** - Builds Docker images and frontend artifacts
+3. **Build** - Builds container images and frontend artifacts
 4. **Deploy-Staging** - Deploys to staging environment
 5. **Test** - Runs health checks
 6. **Approval** - Manual approval for production
@@ -303,7 +190,6 @@ PolymathFinalTask/
 ├── docs/                          # Documentation
 │   ├── README.md                  # This file
 │   ├── ARCHITECTURE.md            # Architecture documentation
-│   ├── ARCHITECTURE_ASCII.md      # ASCII diagram of multi-region architecture
 │   ├── RUNBOOK.md                 # Operational runbook
 │   ├── WELL-ARCHITECTED.md        # AWS Well-Architected Framework mapping
 │   └── COST.md                    # Cost analysis
@@ -330,23 +216,15 @@ PolymathFinalTask/
 │       └── terraform.tfvars       # CI/CD variables
 │
 └── packages/                      # Application code
-    ├── api/                       # Django backend
-    │   ├── Habit_Tracker/        # Django project
-    │   ├── habit/                 # Habit tracking app
-    │   ├── Users/                 # User management app
+    ├── api/                       # Backend application
     │   ├── Dockerfile             # Production container image
-    │   ├── lambda_handler.py     # Lambda entry point
-    │   ├── buildspec-backend.yml # Backend buildspec
-    │   └── requirements.txt      # Python dependencies
+    │   ├── buildspec-backend.yml  # Backend buildspec
+    │   └── requirements.txt       # Dependencies
     │
-    ├── web/                       # React frontend
-    │   ├── src/                   # React source code
-    │   ├── public/               # Static assets
-    │   ├── Dockerfile            # Production container image
-    │   ├── buildspec-frontend.yml # Frontend buildspec
-    │   └── package.json          # Node.js dependencies
-    │
-    └── docker-compose.yml         # Local development setup
+    └── web/                       # Frontend application
+        ├── Dockerfile             # Production container image
+        ├── buildspec-frontend.yml # Frontend buildspec
+        └── package.json           # Dependencies
 ```
 
 ---
@@ -360,11 +238,7 @@ All configuration is externalized - no hard-coded values.
 #### AWS Lambda Environment Variables
 
 Set via Terraform in `ops/iac/modules/compute/main.tf`:
-- `DJANGO_SETTINGS_MODULE` - Django settings module
-- `DEBUG` - Debug mode
-- `REDIS_USE_TLS` - Redis TLS requirement
-- `SESSION_COOKIE_SECURE` - Secure cookies
-- `CSRF_COOKIE_SECURE` - Secure CSRF cookies
+- Environment variables configured via `lambda_environment` variable in `terraform.tfvars`
 - `AWS_SECRET_NAME` - Secrets Manager secret ARN
 - `AWS_SSM_PREFIX` - SSM parameter prefix
 - `AURORA_WRITER_ENDPOINT_PARAM` - Aurora endpoint SSM parameter
@@ -379,7 +253,7 @@ Set via Terraform in `ops/iac/modules/compute/main.tf`:
 - `/apprentice-final/staging/aurora/writer_endpoint` - Aurora writer endpoint
 - `/apprentice-final/staging/aurora/reader_endpoint` - Aurora reader endpoint
 - `/apprentice-final/staging/redis/endpoint` - Redis endpoint
-- `/apprentice-final/staging/django/secret_key` - Django secret key
+- `/apprentice-final/staging/django/secret_key` - Application secret key
 - `/apprentice-final/staging/django/debug` - Debug setting
 - `/apprentice-final/staging/django/allowed_hosts` - Allowed hosts
 - `/apprentice-final/staging/django/csrf_trusted_origins` - CSRF trusted origins
@@ -398,43 +272,20 @@ Set via Terraform in `ops/iac/modules/compute/main.tf`:
 
 ## Health Checks
 
-### Application Health Endpoint
+### Infrastructure Health Endpoint
 
 **URL**: `https://<api-gateway-url>/health/`
 
-**Response**:
-```json
-{
-  "status": "healthy",
-  "services": {
-    "database": {
-      "status": "healthy",
-      "message": "Database connection successful"
-    },
-    "cache": {
-      "status": "healthy",
-      "message": "Redis cache connection successful"
-    }
-  }
-}
-```
+**Purpose**: Verify Lambda function connectivity to Aurora and ElastiCache
 
 **Status Codes:**
 - `200` - All services healthy
 - `503` - One or more services unhealthy
 
-### Authentication Check Endpoint
-
-**URL**: `https://<api-gateway-url>/api/auth/check/`
-
-**Response**:
-```json
-{
-  "authenticated": true,
-  "user_id": 1,
-  "username": "testuser"
-}
-```
+**Verification**:
+- Check Lambda CloudWatch logs for connection status
+- Verify security groups allow traffic
+- Confirm Secrets Manager and SSM parameters are accessible
 
 ---
 
@@ -442,8 +293,7 @@ Set via Terraform in `ops/iac/modules/compute/main.tf`:
 
 Comprehensive documentation is available in the `docs/` directory:
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Architecture diagrams and component explanations
-- **[ARCHITECTURE_ASCII.md](ARCHITECTURE_ASCII.md)** - ASCII diagram of the multi-region serverless architecture
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Architecture diagrams and AWS component explanations
 - **[RUNBOOK.md](RUNBOOK.md)** - Operational procedures and troubleshooting
 - **[WELL-ARCHITECTED.md](WELL-ARCHITECTED.md)** - AWS Well-Architected Framework mapping
 - **[COST.md](COST.md)** - Cost analysis and AWS Pricing Calculator breakdown
